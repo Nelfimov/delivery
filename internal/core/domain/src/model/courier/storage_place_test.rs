@@ -12,8 +12,8 @@ fn should_not_equal() {
     let a = StoragePlace::new(String::from("backpack"), 50, Some(Uuid::new_v4())).unwrap();
     let b = StoragePlace::new(String::from("bag"), 32, None).unwrap();
 
-    assert!(a != b);
-    assert!(a == a);
+    assert!(!a.equals(&b));
+    assert!(!b.equals(&a));
 }
 
 #[test]
@@ -44,10 +44,10 @@ fn should_place_order() {
 
     let mut storage = StoragePlace::new(String::from("backpack"), STORAGE_VOLUME, None).unwrap();
 
-    let _ = storage.place_order(order_id.unwrap(), HIGH_VOLUME);
+    storage.place_order(order_id.unwrap(), HIGH_VOLUME);
     assert_ne!(storage.order_id(), &order_id);
 
-    let _ = storage.place_order(order_id.unwrap(), LOW_VOLUME);
+    storage.place_order(order_id.unwrap(), LOW_VOLUME);
     assert_eq!(storage.order_id(), &order_id);
 }
 
