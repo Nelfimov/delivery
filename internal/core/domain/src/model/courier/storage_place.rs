@@ -71,7 +71,7 @@ impl StoragePlace {
         true
     }
 
-    pub fn place_order(&mut self, order_id: Uuid, volume: u16) -> () {
+    pub fn place_order(&mut self, order_id: Uuid, volume: u16) {
         if self.can_place_order(order_id, volume) {
             self.order_id = Some(order_id);
         }
