@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::errors::domain_model_errors::DomainModelCreationError;
+use crate::errors::domain_model_errors::DomainModelError;
 
 pub struct StoragePlace {
     id: Uuid,
@@ -22,17 +22,15 @@ impl StoragePlace {
         name: String,
         total_volume: u16,
         order_id: Option<Uuid>,
-    ) -> Result<Self, DomainModelCreationError> {
+    ) -> Result<Self, DomainModelError> {
         if total_volume == 0 {
-            return Err(DomainModelCreationError::ArgumentCannotBeZero(
+            return Err(DomainModelError::ArgumentCannotBeZero(
                 "total_volume".to_string(),
             ));
         }
 
         if name.is_empty() {
-            return Err(DomainModelCreationError::ArgumentCannotBeEmpty(
-                "name".to_string(),
-            ));
+            return Err(DomainModelError::ArgumentCannotBeEmpty("name".to_string()));
         }
 
         Ok(Self {
@@ -88,15 +86,13 @@ impl StoragePlace {
     /// assert!(!result);
     /// ```
     ///
-    pub fn place_order(&mut self, order_id: Uuid, volume: u16) -> Result<bool, DomainModelCreationError> {
+    pub fn place_order(&mut self, order_id: Uuid, volume: u16) -> Result<bool, DomainModelError> {
         if volume == 0 {
-            return Err(DomainModelCreationError::ArgumentCannotBeZero(
-                "volume".to_string(),
-            ));
+            return Err(DomainModelError::ArgumentCannotBeZero("volume".to_string()));
         }
 
         if order_id.is_nil() {
-            return Err(DomainModelCreationError::ArgumentCannotBeEmpty(
+            return Err(DomainModelError::ArgumentCannotBeEmpty(
                 "order_id".to_string(),
             ));
         }
