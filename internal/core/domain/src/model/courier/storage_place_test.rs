@@ -12,8 +12,8 @@ fn should_not_equal() {
     let a = StoragePlace::new(String::from("backpack"), 50, Some(Uuid::new_v4())).unwrap();
     let b = StoragePlace::new(String::from("bag"), 32, None).unwrap();
 
-    assert!(!a.equals(&b));
-    assert!(!b.equals(&a));
+    assert!(a != b);
+    assert!(a == a);
 }
 
 #[test]

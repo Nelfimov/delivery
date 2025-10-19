@@ -9,6 +9,14 @@ pub struct StoragePlace {
     order_id: Option<Uuid>,
 }
 
+impl PartialEq for StoragePlace {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for StoragePlace {}
+
 impl StoragePlace {
     pub fn new(
         name: String,
@@ -49,10 +57,6 @@ impl StoragePlace {
 
     pub fn order_id(&self) -> &Option<Uuid> {
         &self.order_id
-    }
-
-    pub fn equals(&self, other: &StoragePlace) -> bool {
-        self.id == other.id
     }
 
     pub fn can_place_order(&self, order_id: Uuid, volume: u16) -> bool {
