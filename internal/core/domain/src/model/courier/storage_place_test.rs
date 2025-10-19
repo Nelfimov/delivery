@@ -44,10 +44,10 @@ fn should_place_order() {
 
     let mut storage = StoragePlace::new(String::from("backpack"), STORAGE_VOLUME, None).unwrap();
 
-    storage.place_order(order_id.unwrap(), HIGH_VOLUME);
+    let _ = storage.place_order(order_id.unwrap(), HIGH_VOLUME);
     assert_ne!(storage.order_id(), &order_id);
 
-    storage.place_order(order_id.unwrap(), LOW_VOLUME);
+    let _ = storage.place_order(order_id.unwrap(), LOW_VOLUME);
     assert_eq!(storage.order_id(), &order_id);
 }
 

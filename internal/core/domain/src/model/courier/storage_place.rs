@@ -75,10 +75,38 @@ impl StoragePlace {
         true
     }
 
-    pub fn place_order(&mut self, order_id: Uuid, volume: u16) {
+    ///
+    /// ```
+    /// use uuid::Uuid;
+    /// use domain::model::courier::storage_place::StoragePlace;
+    ///
+    /// let mut s = StoragePlace::new("back".to_string(), 20, None).unwrap();
+    /// let result = s.place_order(Uuid::new_v4(), 10).unwrap();
+    /// assert!(result);
+    ///
+    /// let result = s.place_order(Uuid::new_v4(), 20).unwrap();
+    /// assert!(!result);
+    /// ```
+    ///
+    pub fn place_order(&mut self, order_id: Uuid, volume: u16) -> Result<bool, DomainModelCreationError> {
+        if volume == 0 {
+            return Err(DomainModelCreationError::ArgumentCannotBeZero(
+                "volume".to_string(),
+            ));
+        }
+
+        if order_id.is_nil() {
+            return Err(DomainModelCreationError::ArgumentCannotBeEmpty(
+                "order_id".to_string(),
+            ));
+        }
+
         if self.can_place_order(order_id, volume) {
             self.order_id = Some(order_id);
+            return Ok(true);
         }
+
+        Ok(false)
     }
 
     pub fn remove_order(&mut self) -> bool {
