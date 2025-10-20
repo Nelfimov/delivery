@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use crate::errors::domain_model_errors::DomainModelError;
+use crate::model::courier::courier::CourierId;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
 
@@ -13,9 +14,6 @@ pub enum OrderStatus {
 
 #[derive(PartialEq, Eq)]
 pub struct OrderId(pub Uuid);
-
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
-pub struct CourierId(pub Uuid);
 
 pub struct Order {
     id: OrderId,
