@@ -4,6 +4,7 @@ use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum OrderStatus {
     Created,
     Assigned,
@@ -13,6 +14,7 @@ pub enum OrderStatus {
 #[derive(PartialEq, Eq)]
 pub struct OrderId(pub Uuid);
 
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub struct CourierId(pub Uuid);
 
 pub struct Order {
@@ -32,30 +34,37 @@ impl PartialEq for Order {
 impl Eq for Order {}
 
 impl Order {
-    fn new(id: OrderId, location: Location, volume: u16) -> Self {
-        Self {
+    pub fn new(id: OrderId, location: Location, volume: u16) -> Result<Self, DomainModelError> {
+        let volume = Volume::new(volume)?;
+
+        Ok(Self {
             id,
             location,
-            volume: Volume::new(volume).unwrap(),
+            volume,
             status: OrderStatus::Created,
             courier_id: None,
-        }
+        })
     }
 
-    fn assign(&mut self, courier_id: CourierId) -> Result<(), DomainModelError> {
+    pub fn assign(&mut self, courier_id: &CourierId) -> Result<(), DomainModelError> {
         if self.courier_id.is_some() {
             return Err(DomainModelError::ArgumentAlreadyExists(
                 "courier_id".to_string(),
             ));
         }
-        self.courier_id = Some(courier_id);
+        self.courier_id = Some(courier_id.clone());
         Ok(())
     }
 
-    fn complete(&mut self) -> Result<(), DomainModelError> {
+    pub fn complete(&mut self) -> Result<(), DomainModelError> {
+        if self.courier_id == None {
+            return Err(DomainModelError::UnmetRequirement(
+                "courier_id is not present".to_owned(),
+            ));
+        }
         match self.status {
-            OrderStatus::Completed => Err(DomainModelError::ArgumentAlreadyExists(
-                "status".to_string(),
+            OrderStatus::Completed => Err(DomainModelError::UnmetRequirement(
+                "status is already set as Completed".to_string(),
             )),
             _ => {
                 self.status = OrderStatus::Completed;
@@ -64,23 +73,23 @@ impl Order {
         }
     }
 
-    fn id(&self) -> Uuid {
+    pub fn id(&self) -> Uuid {
         self.id.0
     }
 
-    fn courier_id(&self) -> &Option<CourierId> {
+    pub fn courier_id(&self) -> &Option<CourierId> {
         &self.courier_id
     }
 
-    fn location(&self) -> &Location {
+    pub fn location(&self) -> &Location {
         &self.location
     }
 
-    fn volume(&self) -> u16 {
+    pub fn volume(&self) -> u16 {
         self.volume.0
     }
 
-    fn status(&self) -> &OrderStatus {
+    pub fn status(&self) -> &OrderStatus {
         &self.status
     }
 }

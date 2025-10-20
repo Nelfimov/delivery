@@ -8,6 +8,7 @@ pub enum DomainModelError {
     ArgumentCannotBeZero(String),
     ArgumentCannotBeEmpty(String),
     ArgumentAlreadyExists(String),
+    UnmetRequirement(String),
 }
 
 impl Error for DomainModelError {}
@@ -27,6 +28,9 @@ impl Display for DomainModelError {
                     "Argument already exists and cannot be overwritten: {}",
                     msg
                 )
+            }
+            DomainModelError::UnmetRequirement(msg) => {
+                write!(f, "Requirement is not met: {}", msg)
             }
         }
     }
