@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use crate::model::kernel::volume::Volume;
+use crate::model::order::order::OrderId;
 
 use super::storage_place::StoragePlace;
 
@@ -10,7 +11,7 @@ fn should_create() {
     StoragePlace::new(
         String::from(""),
         Volume::new(50).unwrap(),
-        Some(Uuid::new_v4()),
+        Some(OrderId::new(Uuid::new_v4())),
     )
     .unwrap();
 }
@@ -20,7 +21,7 @@ fn should_not_equal() {
     let a = StoragePlace::new(
         String::from("backpack"),
         Volume::new(50).unwrap(),
-        Some(Uuid::new_v4()),
+        Some(OrderId::new(Uuid::new_v4())),
     )
     .unwrap();
     let b = StoragePlace::new(String::from("bag"), Volume::new(32).unwrap(), None).unwrap();
@@ -38,14 +39,18 @@ fn should_check_if_can_place_order() {
 
     let without_order = StoragePlace::new(String::from("backpack"), storage_volume, None).unwrap();
 
-    assert!(without_order.can_place_order(Uuid::new_v4(), low_volume));
-    assert!(!without_order.can_place_order(Uuid::new_v4(), high_volume));
+    assert!(without_order.can_place_order(&low_volume));
+    assert!(!without_order.can_place_order(&high_volume));
 
-    let with_order =
-        StoragePlace::new(String::from("backpack"), storage_volume, Some(order_id)).unwrap();
+    let with_order = StoragePlace::new(
+        String::from("backpack"),
+        storage_volume,
+        Some(OrderId::new(order_id)),
+    )
+    .unwrap();
 
-    assert!(!with_order.can_place_order(Uuid::new_v4(), low_volume));
-    assert!(!with_order.can_place_order(Uuid::new_v4(), high_volume));
+    assert!(!with_order.can_place_order(&low_volume));
+    assert!(!with_order.can_place_order(&high_volume));
 }
 
 #[test]
@@ -53,7 +58,7 @@ fn should_place_order() {
     let storage_volume = Volume::new(50).unwrap();
     let low_volume = Volume::new(30).unwrap();
     let high_volume = Volume::new(60).unwrap();
-    let order_id = Some(Uuid::new_v4());
+    let order_id = Some(OrderId::new(Uuid::new_v4()));
 
     let mut storage = StoragePlace::new(String::from("backpack"), storage_volume, None).unwrap();
 
@@ -67,7 +72,7 @@ fn should_place_order() {
 #[test]
 fn should_remove_order() {
     let storage_volume = Volume::new(50).unwrap();
-    let order_id = Some(Uuid::new_v4());
+    let order_id = Some(OrderId::new(Uuid::new_v4()));
 
     let mut storage =
         StoragePlace::new(String::from("backpack"), storage_volume, order_id).unwrap();

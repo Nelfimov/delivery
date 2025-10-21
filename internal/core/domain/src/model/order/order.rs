@@ -12,8 +12,18 @@ pub enum OrderStatus {
     Completed,
 }
 
-#[derive(PartialEq, Eq)]
-pub struct OrderId(pub Uuid);
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct OrderId(Uuid);
+
+impl OrderId {
+    pub fn new(id: Uuid) -> Self {
+        Self(id)
+    }
+
+    pub fn value(&self) -> Uuid {
+        self.0
+    }
+}
 
 pub struct Order {
     id: OrderId,
