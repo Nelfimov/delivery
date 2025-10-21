@@ -1,6 +1,7 @@
 use crate::errors::domain_model_errors::DomainModelError;
 
-pub struct Volume(pub u16);
+#[derive(Clone, Copy)]
+pub struct Volume(u16);
 
 impl Volume {
     pub fn new(v: u16) -> Result<Self, DomainModelError> {
@@ -9,5 +10,9 @@ impl Volume {
         }
 
         Ok(Self(v))
+    }
+
+    pub fn value(&self) -> u16 {
+        self.0
     }
 }

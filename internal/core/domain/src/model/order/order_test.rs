@@ -26,8 +26,8 @@ fn should_panic_on_nullish_volume() {
 mod tests {
     use uuid::Uuid;
 
+    use crate::model::courier::courier::CourierId;
     use crate::model::kernel::location::Location;
-    use crate::model::order::order::CourierId;
     use crate::model::order::order::OrderStatus;
 
     use super::super::order::Order;

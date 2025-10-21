@@ -84,7 +84,7 @@ impl Order {
     }
 
     pub fn volume(&self) -> u16 {
-        self.volume.0
+        self.volume.value()
     }
 
     pub fn status(&self) -> &OrderStatus {
