@@ -65,32 +65,13 @@ impl StoragePlace {
         true
     }
 
-    ///
-    /// ```
-    /// use uuid::Uuid;
-    /// use domain::model::courier::storage_place::StoragePlace;
-    /// use domain::model::kernel::volume::Volume;
-    /// use domain::model::order::order::OrderId;
-    ///
-    /// let mut s = StoragePlace::new("back".to_string(), Volume::new(20).unwrap(), None).unwrap();
-    /// let result = s.place_order(OrderId::new(Uuid::new_v4()), Volume::new(10).unwrap()).unwrap();
-    /// assert!(result);
-    ///
-    /// let result = s.place_order(OrderId::new(Uuid::new_v4()), Volume::new(20).unwrap()).unwrap();
-    /// assert!(!result);
-    /// ```
-    ///
-    pub fn place_order(
-        &mut self,
-        order_id: OrderId,
-        volume: Volume,
-    ) -> Result<bool, DomainModelError> {
+    pub fn place_order(&mut self, order_id: OrderId, volume: Volume) -> bool {
         if self.can_place_order(&volume) {
             self.order_id = Some(order_id);
-            return Ok(true);
+            return true;
         }
 
-        Ok(false)
+        false
     }
 
     pub fn remove_order(&mut self) -> bool {
