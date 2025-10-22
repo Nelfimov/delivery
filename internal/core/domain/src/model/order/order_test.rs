@@ -2,8 +2,8 @@ use uuid::Uuid;
 
 use crate::model::kernel::location::Location;
 
-use super::order::Order;
-use super::order::OrderId;
+use super::order_aggregate::Order;
+use super::order_aggregate::OrderId;
 
 #[test]
 fn should_create_order() {
@@ -26,12 +26,12 @@ fn should_panic_on_nullish_volume() {
 mod tests {
     use uuid::Uuid;
 
-    use crate::model::courier::courier::CourierId;
+    use crate::model::courier::courier_aggregate::CourierId;
     use crate::model::kernel::location::Location;
-    use crate::model::order::order::OrderStatus;
+    use crate::model::order::order_aggregate::OrderStatus;
 
-    use super::super::order::Order;
-    use super::super::order::OrderId;
+    use super::super::order_aggregate::Order;
+    use super::super::order_aggregate::OrderId;
 
     #[test]
     #[should_panic = "Exists"]

@@ -1,4 +1,4 @@
-pub mod courier;
+pub mod courier_aggregate;
 #[cfg(test)]
 pub mod courier_test;
 pub mod storage_place;

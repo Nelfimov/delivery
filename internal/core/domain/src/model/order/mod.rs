@@ -1,3 +1,3 @@
-pub mod order;
+pub mod order_aggregate;
 #[cfg(test)]
 pub mod order_test;

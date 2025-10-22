@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::errors::domain_model_errors::DomainModelError;
-use crate::model::courier::courier::CourierId;
+use crate::model::courier::courier_aggregate::CourierId;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
 
@@ -60,12 +60,12 @@ impl Order {
                 "courier_id".to_string(),
             ));
         }
-        self.courier_id = Some(courier_id.clone());
+        self.courier_id = Some(*courier_id);
         Ok(())
     }
 
     pub fn complete(&mut self) -> Result<(), DomainModelError> {
-        if self.courier_id == None {
+        if self.courier_id.is_none() {
             return Err(DomainModelError::UnmetRequirement(
                 "courier_id is not present".to_owned(),
             ));

@@ -1,11 +1,11 @@
 use uuid::Uuid;
 
-use crate::model::courier::courier::Courier;
-use crate::model::courier::courier::CourierName;
-use crate::model::courier::courier::CourierSpeed;
+use crate::model::courier::courier_aggregate::Courier;
+use crate::model::courier::courier_aggregate::CourierName;
+use crate::model::courier::courier_aggregate::CourierSpeed;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
-use crate::model::order::order::OrderId;
+use crate::model::order::order_aggregate::OrderId;
 
 fn make_courier_at(x: u8, y: u8) -> Courier {
     Courier::new(

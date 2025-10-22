@@ -4,7 +4,7 @@ use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::courier::storage_place::StoragePlace;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
-use crate::model::order::order::OrderId;
+use crate::model::order::order_aggregate::OrderId;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub struct CourierId(pub Uuid);
@@ -79,10 +79,10 @@ impl Courier {
     }
 
     pub fn take_order(&mut self, order_id: OrderId, order_volume: Volume) {
-        if let Some(index) = self.can_take_order(&order_volume) {
-            if let Some(storage) = self.storage_places.get_mut(index) {
-                let _ = storage.place_order(order_id, order_volume);
-            }
+        if let Some(index) = self.can_take_order(&order_volume)
+            && let Some(storage) = self.storage_places.get_mut(index)
+        {
+            storage.place_order(order_id, order_volume);
         }
     }
 

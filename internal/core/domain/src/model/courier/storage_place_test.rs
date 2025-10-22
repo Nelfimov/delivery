@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::model::kernel::volume::Volume;
-use crate::model::order::order::OrderId;
+use crate::model::order::order_aggregate::OrderId;
 
 use super::storage_place::StoragePlace;
 

@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::kernel::volume::Volume;
-use crate::model::order::order::OrderId;
+use crate::model::order::order_aggregate::OrderId;
 
 pub struct StoragePlace {
     id: Uuid,
