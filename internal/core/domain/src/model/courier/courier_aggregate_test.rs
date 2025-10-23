@@ -13,6 +13,7 @@ fn make_courier_at(x: u8, y: u8) -> Courier {
         CourierSpeed(5),
         Location::new(x, y).unwrap(),
     )
+    .unwrap()
 }
 
 #[test]

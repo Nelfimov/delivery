@@ -28,19 +28,22 @@ impl PartialEq for Courier {
 }
 
 impl Courier {
-    pub fn new(name: CourierName, speed: CourierSpeed, location: Location) -> Self {
-        let detault_volume = Volume::new(10).unwrap();
-        let default_storage_place =
-            StoragePlace::new("bag".to_string(), detault_volume, None).unwrap();
+    pub fn new(
+        name: CourierName,
+        speed: CourierSpeed,
+        location: Location,
+    ) -> Result<Self, DomainModelError> {
+        let detault_volume = Volume::new(10)?;
+        let default_storage_place = StoragePlace::new("bag".to_string(), detault_volume, None)?;
         let storage_places: Vec<StoragePlace> = vec![default_storage_place];
 
-        Self {
+        Ok(Self {
             id: CourierId(Uuid::new_v4()),
             location,
             name,
             speed,
             storage_places,
-        }
+        })
     }
 
     pub fn id(&self) -> &Uuid {
@@ -64,7 +67,7 @@ impl Courier {
         name: String,
         volume: Volume,
     ) -> Result<(), DomainModelError> {
-        let new_storage_place = StoragePlace::new(name, volume, None).unwrap();
+        let new_storage_place = StoragePlace::new(name, volume, None)?;
         self.storage_places.push(new_storage_place);
         Ok(())
     }
@@ -116,7 +119,8 @@ impl Courier {
                 } else {
                     preliminary_action
                 };
-                self.location = Location::new(x, self.location.y()).unwrap()
+                self.location = Location::new(x, self.location.y())
+                    .map_err(|e| DomainModelError::ArgumentCannotBeZero(e))?
             }
             if self.location.x() > location.x() {
                 let preliminary_action = self.location.x() - speed;
@@ -125,7 +129,8 @@ impl Courier {
                 } else {
                     preliminary_action
                 };
-                self.location = Location::new(x, self.location.y()).unwrap()
+                self.location = Location::new(x, self.location.y())
+                    .map_err(|e| DomainModelError::ArgumentCannotBeZero(e))?
             }
         } else {
             if self.location.y() < location.y() {
@@ -135,7 +140,8 @@ impl Courier {
                 } else {
                     preliminary_action
                 };
-                self.location = Location::new(self.location.x(), y).unwrap()
+                self.location = Location::new(self.location.x(), y)
+                    .map_err(|e| DomainModelError::ArgumentCannotBeZero(e))?
             }
             if self.location.y() > location.y() {
                 let preliminary_action = self.location.y() - speed;
@@ -144,7 +150,8 @@ impl Courier {
                 } else {
                     preliminary_action
                 };
-                self.location = Location::new(self.location.x(), y).unwrap()
+                self.location = Location::new(self.location.x(), y)
+                    .map_err(|e| DomainModelError::ArgumentCannotBeZero(e))?
             }
         }
 
