@@ -120,7 +120,7 @@ impl Courier {
                     preliminary_action
                 };
                 self.location = Location::new(x, self.location.y())
-                    .map_err(|e| DomainModelError::ArgumentCannotBeZero(e))?
+                    .map_err(DomainModelError::ArgumentCannotBeZero)?
             }
             if self.location.x() > location.x() {
                 let preliminary_action = self.location.x() - speed;
@@ -130,7 +130,7 @@ impl Courier {
                     preliminary_action
                 };
                 self.location = Location::new(x, self.location.y())
-                    .map_err(|e| DomainModelError::ArgumentCannotBeZero(e))?
+                    .map_err(DomainModelError::ArgumentCannotBeZero)?
             }
         } else {
             if self.location.y() < location.y() {
@@ -141,7 +141,7 @@ impl Courier {
                     preliminary_action
                 };
                 self.location = Location::new(self.location.x(), y)
-                    .map_err(|e| DomainModelError::ArgumentCannotBeZero(e))?
+                    .map_err(DomainModelError::ArgumentCannotBeZero)?
             }
             if self.location.y() > location.y() {
                 let preliminary_action = self.location.y() - speed;
@@ -151,7 +151,7 @@ impl Courier {
                     preliminary_action
                 };
                 self.location = Location::new(self.location.x(), y)
-                    .map_err(|e| DomainModelError::ArgumentCannotBeZero(e))?
+                    .map_err(DomainModelError::ArgumentCannotBeZero)?
             }
         }
 
