@@ -1,12 +1,14 @@
 use uuid::Uuid;
 
-use crate::errors::domain_model_errors::DomainModelCreationError;
+use crate::errors::domain_model_errors::DomainModelError;
+use crate::model::kernel::volume::Volume;
+use crate::model::order::order_aggregate::OrderId;
 
 pub struct StoragePlace {
     id: Uuid,
     name: String,
-    total_volume: u16,
-    order_id: Option<Uuid>,
+    total_volume: Volume,
+    order_id: Option<OrderId>,
 }
 
 impl PartialEq for StoragePlace {
@@ -20,19 +22,11 @@ impl Eq for StoragePlace {}
 impl StoragePlace {
     pub fn new(
         name: String,
-        total_volume: u16,
-        order_id: Option<Uuid>,
-    ) -> Result<Self, DomainModelCreationError> {
-        if total_volume == 0 {
-            return Err(DomainModelCreationError::ArgumentCannotBeZero(
-                "total_volume".to_string(),
-            ));
-        }
-
+        total_volume: Volume,
+        order_id: Option<OrderId>,
+    ) -> Result<Self, DomainModelError> {
         if name.is_empty() {
-            return Err(DomainModelCreationError::ArgumentCannotBeEmpty(
-                "name".to_string(),
-            ));
+            return Err(DomainModelError::ArgumentCannotBeEmpty("name".to_string()));
         }
 
         Ok(Self {
@@ -51,62 +45,33 @@ impl StoragePlace {
         &self.name
     }
 
-    pub fn total_volume(&self) -> &u16 {
-        &self.total_volume
+    pub fn total_volume(&self) -> u16 {
+        self.total_volume.value()
     }
 
-    pub fn order_id(&self) -> &Option<Uuid> {
+    pub fn order_id(&self) -> &Option<OrderId> {
         &self.order_id
     }
 
-    pub fn can_place_order(&self, order_id: Uuid, volume: u16) -> bool {
+    pub fn can_place_order(&self, volume: &Volume) -> bool {
+        if volume.value() > self.total_volume.value() {
+            return false;
+        }
+
         if self.order_id.is_some() {
-            return false;
-        }
-
-        if order_id.is_nil() {
-            return false;
-        }
-
-        if volume > self.total_volume {
             return false;
         }
 
         true
     }
 
-    ///
-    /// ```
-    /// use uuid::Uuid;
-    /// use domain::model::courier::storage_place::StoragePlace;
-    ///
-    /// let mut s = StoragePlace::new("back".to_string(), 20, None).unwrap();
-    /// let result = s.place_order(Uuid::new_v4(), 10).unwrap();
-    /// assert!(result);
-    ///
-    /// let result = s.place_order(Uuid::new_v4(), 20).unwrap();
-    /// assert!(!result);
-    /// ```
-    ///
-    pub fn place_order(&mut self, order_id: Uuid, volume: u16) -> Result<bool, DomainModelCreationError> {
-        if volume == 0 {
-            return Err(DomainModelCreationError::ArgumentCannotBeZero(
-                "volume".to_string(),
-            ));
-        }
-
-        if order_id.is_nil() {
-            return Err(DomainModelCreationError::ArgumentCannotBeEmpty(
-                "order_id".to_string(),
-            ));
-        }
-
-        if self.can_place_order(order_id, volume) {
+    pub fn place_order(&mut self, order_id: OrderId, volume: Volume) -> bool {
+        if self.can_place_order(&volume) {
             self.order_id = Some(order_id);
-            return Ok(true);
+            return true;
         }
 
-        Ok(false)
+        false
     }
 
     pub fn remove_order(&mut self) -> bool {

@@ -1,6 +1,13 @@
 APP_NAME=delivery
+HOOKS_DIR := .git-hooks
 
 .PHONY: build test
+
+prepare:
+	@git config --local core.hooksPath "$(HOOKS_DIR)"
+	@chmod +x $(HOOKS_DIR)/* || true
+	@echo "✅ Git hooks подключены (core.hooksPath = $(HOOKS_DIR))"
+
 build: test ## Build application
 	mkdir -p build
 	go build -o build/${APP_NAME} cmd/app/main.go
