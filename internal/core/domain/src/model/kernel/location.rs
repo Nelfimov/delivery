@@ -1,7 +1,7 @@
 use rand::Rng;
 use rand::rng;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Location {
     x: u8,
     y: u8,

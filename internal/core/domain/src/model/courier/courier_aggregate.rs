@@ -9,10 +9,13 @@ use crate::model::order::order_aggregate::OrderId;
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub struct CourierId(pub Uuid);
 
+#[derive(Clone, Debug)]
 pub struct CourierName(pub String);
 
+#[derive(Clone, Debug)]
 pub struct CourierSpeed(pub u8);
 
+#[derive(Clone, Debug)]
 pub struct Courier {
     id: CourierId,
     name: CourierName,
