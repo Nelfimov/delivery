@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::courier::courier_aggregate::Courier;
 use crate::model::kernel::volume::Volume;
@@ -33,7 +35,7 @@ impl OrderDispatcher for OrderDispatcherService {
             }
         }
 
-        available.sort_by_key(|c| *c.speed());
+        available.sort_by_key(|c| Reverse(c.get_traverse_length(order.location())));
 
         let mut courier = available.pop().ok_or(DomainModelError::UnmetRequirement(
             "no courier found".into(),
