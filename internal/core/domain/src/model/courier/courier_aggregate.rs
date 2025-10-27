@@ -49,8 +49,8 @@ impl Courier {
         })
     }
 
-    pub fn id(&self) -> &Uuid {
-        &self.id.0
+    pub fn id(&self) -> &CourierId {
+        &self.id
     }
     pub fn name(&self) -> &String {
         &self.name.0

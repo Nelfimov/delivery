@@ -7,13 +7,19 @@ use crate::model::order::order_aggregate::Order;
 use crate::model::order::order_aggregate::OrderStatus;
 
 pub trait OrderDispatcher {
-    fn dispatch(order: &Order, couriers: &mut Vec<Courier>) -> Result<Courier, DomainModelError>;
+    fn dispatch(
+        order: &mut Order,
+        couriers: &mut Vec<Courier>,
+    ) -> Result<Courier, DomainModelError>;
 }
 
 pub struct OrderDispatcherService;
 
 impl OrderDispatcher for OrderDispatcherService {
-    fn dispatch(order: &Order, couriers: &mut Vec<Courier>) -> Result<Courier, DomainModelError> {
+    fn dispatch(
+        order: &mut Order,
+        couriers: &mut Vec<Courier>,
+    ) -> Result<Courier, DomainModelError> {
         if order.status() != &OrderStatus::Created {
             return Err(DomainModelError::UnmetRequirement(
                 "status it not 'created'".into(),
@@ -42,6 +48,10 @@ impl OrderDispatcher for OrderDispatcherService {
         ))?;
 
         courier.take_order(order.id(), order_volume);
+        match order.assign(courier.id()) {
+            Ok(_) => {}
+            Err(e) => return Err(e),
+        }
         Ok(courier)
     }
 }

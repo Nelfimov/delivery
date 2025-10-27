@@ -32,13 +32,13 @@ fn fails_when_order_not_created() {
     let _ = order.assign(&CourierId(Uuid::new_v4()));
     let _ = order.complete();
 
-    let result = OrderDispatcherService::dispatch(&order, &mut couriers);
+    let result = OrderDispatcherService::dispatch(&mut order, &mut couriers);
     assert!(matches!(result, Err(DomainModelError::UnmetRequirement(_))));
 }
 
 #[test]
 fn fails_when_no_available_couriers() {
-    let order = Order::new(
+    let mut order = Order::new(
         OrderId::new(Uuid::new_v4()),
         Location::new(1, 1).unwrap(),
         10,
@@ -63,13 +63,13 @@ fn fails_when_no_available_couriers() {
 
     let mut couriers = vec![];
 
-    let result = OrderDispatcherService::dispatch(&order, &mut couriers);
+    let result = OrderDispatcherService::dispatch(&mut order, &mut couriers);
     assert!(matches!(result, Err(DomainModelError::UnmetRequirement(_))));
 }
 
 #[test]
 fn picks_fastest_available_courier() {
-    let order = Order::new(
+    let mut order = Order::new(
         OrderId::new(Uuid::new_v4()),
         Location::new(1, 1).unwrap(),
         10,
@@ -95,6 +95,6 @@ fn picks_fastest_available_courier() {
     .unwrap();
     let mut couriers = vec![courier_bob, courier_rick, courier_zack];
 
-    let result = OrderDispatcherService::dispatch(&order, &mut couriers).unwrap();
+    let result = OrderDispatcherService::dispatch(&mut order, &mut couriers).unwrap();
     assert_eq!(result.name(), "Zack");
 }
