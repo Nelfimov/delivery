@@ -47,11 +47,15 @@ impl OrderDispatcher for OrderDispatcherService {
             "no courier found".into(),
         ))?;
 
-        courier.take_order(order.id(), order_volume);
-        match order.assign(courier.id()) {
-            Ok(_) => {}
-            Err(e) => return Err(e),
+        match courier.take_order(order.id(), order_volume) {
+            Ok(_) => {
+                match order.assign(courier.id()) {
+                    Ok(_) => {}
+                    Err(e) => return Err(e),
+                }
+                Ok(courier)
+            }
+            Err(e) => Err(e),
         }
-        Ok(courier)
     }
 }

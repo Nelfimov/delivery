@@ -84,12 +84,22 @@ impl Courier {
             .map(|(index, _)| index)
     }
 
-    pub fn take_order(&mut self, order_id: OrderId, order_volume: Volume) {
+    pub fn take_order(
+        &mut self,
+        order_id: OrderId,
+        order_volume: Volume,
+    ) -> Result<(), DomainModelError> {
         if let Some(index) = self.can_take_order(&order_volume)
             && let Some(storage) = self.storage_places.get_mut(index)
         {
             storage.place_order(order_id, order_volume);
+            return Ok(());
         }
+
+        Err(DomainModelError::UnmetRequirement(format!(
+            "could not assign order, {:?}",
+            self
+        )))
     }
 
     pub fn complete_order(&mut self, order_id: OrderId) {
