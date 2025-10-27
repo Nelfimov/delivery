@@ -1,3 +1,7 @@
 [workspace]
 resolver = "3"
-members = ["internal/core/domain"]
+members = ["internal/adapters/out/postgres", "internal/core/domain"]
+
+[workspace.dependencies]
+diesel = "2.3.3"
+uuid = { version = "1.18.1", features = ["v4"] }

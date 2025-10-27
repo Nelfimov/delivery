@@ -1,0 +1,9 @@
+[package]
+name = "out_postgres"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+diesel = { workspace = true, features = ["postgres", "uuid"] }
+domain = { path = "../../../core/domain" }
+uuid = { workspace = true }
