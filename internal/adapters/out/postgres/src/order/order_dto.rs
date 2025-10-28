@@ -6,8 +6,9 @@ diesel::table! {
     orders {
         id -> diesel::sql_types::Uuid,
         courier_id -> diesel::sql_types::Nullable<diesel::sql_types::Uuid>,
-        location -> diesel::sql_types::Text,
-        volume -> diesel::sql_types::Text,
+        location_x -> diesel::sql_types::SmallInt,
+        location_y -> diesel::sql_types::SmallInt,
+        volume -> diesel::sql_types::SmallInt,
         status -> diesel::sql_types::Text,
     }
 }
@@ -19,7 +20,8 @@ diesel::table! {
 pub struct OrderDto {
     pub id: Uuid,
     pub courier_id: Option<Uuid>,
-    pub location: String,
-    pub volume: String,
+    pub location_x: i16,
+    pub location_y: i16,
+    pub volume: i16,
     pub status: String,
 }

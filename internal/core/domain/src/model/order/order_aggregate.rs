@@ -54,6 +54,22 @@ impl Order {
         })
     }
 
+    pub fn restore(
+        id: OrderId,
+        courier_id: Option<CourierId>,
+        location: Location,
+        volume: Volume,
+        status: OrderStatus,
+    ) -> Self {
+        Self {
+            id,
+            location,
+            volume,
+            status,
+            courier_id,
+        }
+    }
+
     pub fn assign(&mut self, courier_id: &CourierId) -> Result<(), DomainModelError> {
         if self.courier_id.is_some() {
             return Err(DomainModelError::ArgumentAlreadyExists(
