@@ -9,10 +9,13 @@ use crate::model::order::order_aggregate::OrderId;
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub struct CourierId(pub Uuid);
 
+#[derive(Clone, Debug)]
 pub struct CourierName(pub String);
 
+#[derive(Clone, Debug)]
 pub struct CourierSpeed(pub u8);
 
+#[derive(Clone, Debug)]
 pub struct Courier {
     id: CourierId,
     name: CourierName,
@@ -46,8 +49,8 @@ impl Courier {
         })
     }
 
-    pub fn id(&self) -> &Uuid {
-        &self.id.0
+    pub fn id(&self) -> &CourierId {
+        &self.id
     }
     pub fn name(&self) -> &String {
         &self.name.0
@@ -81,12 +84,22 @@ impl Courier {
             .map(|(index, _)| index)
     }
 
-    pub fn take_order(&mut self, order_id: OrderId, order_volume: Volume) {
+    pub fn take_order(
+        &mut self,
+        order_id: OrderId,
+        order_volume: Volume,
+    ) -> Result<(), DomainModelError> {
         if let Some(index) = self.can_take_order(&order_volume)
             && let Some(storage) = self.storage_places.get_mut(index)
         {
             storage.place_order(order_id, order_volume);
+            return Ok(());
         }
+
+        Err(DomainModelError::UnmetRequirement(format!(
+            "could not assign order, {:?}",
+            self
+        )))
     }
 
     pub fn complete_order(&mut self, order_id: OrderId) {

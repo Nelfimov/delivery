@@ -4,6 +4,7 @@ use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::kernel::volume::Volume;
 use crate::model::order::order_aggregate::OrderId;
 
+#[derive(Clone, Debug)]
 pub struct StoragePlace {
     id: Uuid,
     name: String,

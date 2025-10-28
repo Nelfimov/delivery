@@ -1,6 +1,6 @@
 use crate::errors::domain_model_errors::DomainModelError;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Volume(u16);
 
 impl Volume {

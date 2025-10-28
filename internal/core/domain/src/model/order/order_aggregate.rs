@@ -81,8 +81,8 @@ impl Order {
         }
     }
 
-    pub fn id(&self) -> Uuid {
-        self.id.0
+    pub fn id(&self) -> OrderId {
+        self.id
     }
 
     pub fn courier_id(&self) -> &Option<CourierId> {
