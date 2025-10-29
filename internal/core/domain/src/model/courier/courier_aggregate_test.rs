@@ -49,7 +49,7 @@ fn takes_and_completes_order() {
 
     assert!(courier.can_take_order(&volume).is_some());
 
-    courier.take_order(order_id, volume);
+    let _ = courier.take_order(order_id, volume);
     assert!(
         courier
             .storage_places()
