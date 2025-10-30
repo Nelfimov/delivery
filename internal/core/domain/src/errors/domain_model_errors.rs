@@ -9,6 +9,7 @@ pub enum DomainModelError {
     ArgumentCannotBeEmpty(String),
     ArgumentAlreadyExists(String),
     UnmetRequirement(String),
+    MapError(String),
 }
 
 impl Error for DomainModelError {}
@@ -31,6 +32,9 @@ impl Display for DomainModelError {
             }
             DomainModelError::UnmetRequirement(msg) => {
                 write!(f, "Requirement is not met: {}", msg)
+            }
+            DomainModelError::MapError(msg) => {
+                write!(f, "Error while mapping domain model: {}", msg)
             }
         }
     }

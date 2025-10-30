@@ -12,6 +12,12 @@ pub enum OrderStatus {
     Completed,
 }
 
+impl From<OrderStatus> for String {
+    fn from(value: OrderStatus) -> Self {
+        value.as_str().to_string()
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct OrderId(Uuid);
 
