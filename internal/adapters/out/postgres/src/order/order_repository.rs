@@ -1,64 +1,84 @@
 use diesel::PgConnection;
-use diesel::dsl::insert_into;
-use diesel::dsl::update;
+use diesel::insert_into;
 use diesel::prelude::*;
-use diesel::result::Error;
+use diesel::update;
 use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
 use domain::model::order::order_aggregate::OrderStatus;
+use ports::errors::RepositoryError;
+use ports::order_repository_port::OrderRepositoryPort;
+
+use crate::errors::postgres_error::PostgresError;
 
 use super::order_dto::OrderDto;
 use super::order_schema::orders::dsl::*;
 
-pub struct OrderRepository {
-    pub connection: PgConnection,
+pub struct OrderRepository<'a> {
+    connection: &'a mut PgConnection,
 }
 
-impl OrderRepository {
-    pub fn add(&mut self, order: &Order) -> Result<(), Error> {
-        insert_into(orders::table)
-            .values(order.try_into())
-            .load(self.connection)?
+impl<'a> OrderRepository<'a> {
+    pub fn new(connection: &'a mut PgConnection) -> Self {
+        Self { connection }
     }
+}
 
-    pub fn update(order: &Order) -> Result<(), Error> {
+impl<'a> OrderRepositoryPort for OrderRepository<'a> {
+    fn add(&mut self, order: &Order) -> Result<(), RepositoryError> {
         let dto: OrderDto = order.into();
-        update(orders.find(dto.id)).set(&dto).execute(connection)?;
+        let _ = insert_into(orders)
+            .values(&dto)
+            .execute(self.connection)
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
         Ok(())
     }
 
-    pub fn get_by_id(&mut self, order_id: OrderId) -> Result<Order, Error> {
-        let order: OrderDto = orders.find(order_id.value()).first(&mut self.connection)?;
+    fn update(&mut self, order: &Order) -> Result<(), RepositoryError> {
+        let dto: OrderDto = order.into();
 
-        Ok(order
-            .try_into()
-            .map_err(|e| Error::DeserializationError(Box::new(e)))?)
+        update(orders.find(dto.id))
+            .set(&dto)
+            .execute(self.connection)
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+        Ok(())
     }
 
-    pub fn get_any_new(&mut self) {
-        let row: OrderDto = orders
-            .filter(status.eq(OrderStatus::Created.into()))
-            .limit(1)
-            .load(&mut self.connection)?;
+    fn get_by_id(&mut self, order_id: OrderId) -> Result<Order, RepositoryError> {
+        let order: OrderDto = orders
+            .find(order_id.value())
+            .first(self.connection)
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
 
-        let result: OrderDto = row
-            .try_into()
-            .map_err(|e| Error::DeserializationError(Box::new(e)))?;
+        order.try_into().map_err(RepositoryError::MapError)
+    }
+
+    fn get_any_new(&mut self) -> Result<Order, RepositoryError> {
+        let row: OrderDto = orders
+            .filter(status.eq(OrderStatus::Created.to_string()))
+            .first(self.connection)
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
+        let result: Order = row.try_into().map_err(RepositoryError::MapError)?;
 
         Ok(result)
     }
 
-    pub fn get_all_assigned(&mut self) -> Result<Vec<Order>, Error> {
-        let rows: Vec<OrderDto> = orders
-            .filter(status.eq(OrderStatus::Assigned.into()))
-            .load(&mut self.connection)?;
+    fn get_all_assigned(&mut self) -> Result<Vec<Order>, RepositoryError> {
+        let s: String = OrderStatus::Assigned.into();
 
-        let result: Result<Vec<Order>, Error> = rows
+        let rows: Vec<OrderDto> = orders
+            .filter(status.eq(s))
+            .load(self.connection)
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
+        let result: Result<Vec<Order>, RepositoryError> = rows
             .into_iter()
-            .map(|dto| {
-                dto.try_into()
-                    .map_err(|e| Error::DeserializationError(Box::new(e)))
-            })
+            .map(|dto| dto.try_into().map_err(RepositoryError::MapError))
             .collect();
 
         result

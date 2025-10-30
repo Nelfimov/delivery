@@ -2,8 +2,10 @@ use diesel::pg::Pg;
 use diesel::prelude::*;
 use uuid::Uuid;
 
-#[derive(Queryable, Selectable, Identifiable, Insertable)]
-#[diesel(table_name = super::order_schema::orders)]
+use super::order_schema::orders;
+
+#[derive(Queryable, Selectable, Identifiable, Insertable, AsChangeset)]
+#[diesel(table_name = orders)]
 #[diesel(treat_none_as_default_value = false)]
 #[diesel(check_for_backend(Pg))]
 pub struct OrderDto {

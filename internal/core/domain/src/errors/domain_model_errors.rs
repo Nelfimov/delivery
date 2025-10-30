@@ -14,6 +14,12 @@ pub enum DomainModelError {
 
 impl Error for DomainModelError {}
 
+impl From<DomainModelError> for String {
+    fn from(value: DomainModelError) -> Self {
+        value.to_string()
+    }
+}
+
 impl Display for DomainModelError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {

@@ -4,6 +4,7 @@ use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::courier::courier_aggregate::CourierId;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum OrderStatus {
@@ -14,7 +15,28 @@ pub enum OrderStatus {
 
 impl From<OrderStatus> for String {
     fn from(value: OrderStatus) -> Self {
-        value.as_str().to_string()
+        match value {
+            OrderStatus::Created => "created".into(),
+            OrderStatus::Assigned => "assigned".into(),
+            OrderStatus::Completed => "completed".into(),
+        }
+    }
+}
+
+impl From<&OrderStatus> for String {
+    fn from(value: &OrderStatus) -> Self {
+        match value {
+            OrderStatus::Created => "created".into(),
+            OrderStatus::Assigned => "assigned".into(),
+            OrderStatus::Completed => "completed".into(),
+        }
+    }
+}
+
+impl Display for OrderStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let v: String = self.into();
+        write!(f, "{}", v)
     }
 }
 

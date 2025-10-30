@@ -1,4 +1,3 @@
-use domain::errors::domain_model_errors::DomainModelError;
 use domain::model::courier::courier_aggregate::CourierId;
 use domain::model::kernel::location::Location;
 use domain::model::kernel::volume::Volume;
@@ -16,24 +15,20 @@ impl From<&Order> for OrderDto {
             location_x: order.location().x() as i16,
             location_y: order.location().y() as i16,
             volume: order.volume() as i16,
-            status: match order.status() {
-                OrderStatus::Created => "created".to_string(),
-                OrderStatus::Assigned => "assigned".to_string(),
-                OrderStatus::Completed => "completed".to_string(),
-            },
+            status: order.status().into(),
         }
     }
 }
 
 impl TryFrom<OrderDto> for Order {
-    type Error = DomainModelError;
+    type Error = String;
 
     fn try_from(row: OrderDto) -> Result<Self, Self::Error> {
         let status = match row.status.as_str() {
             "created" => OrderStatus::Created,
             "assigned" => OrderStatus::Assigned,
             "completed" => OrderStatus::Completed,
-            _ => return Err(DomainModelError::UnmetRequirement("invalid status".into())),
+            _ => return Err("invalid status".into()),
         };
 
         let id = OrderId::new(row.id);

@@ -1,4 +1,6 @@
 use diesel::prelude::*;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::Pool;
 
 pub struct PgConnectionOptions {
     host: String,
@@ -31,8 +33,8 @@ impl PgConnectionOptions {
     }
 }
 
-pub fn establish_connection(opt: PgConnectionOptions) -> PgConnection {
-    let database_url = format!(
+pub fn establish_connection(opt: PgConnectionOptions) -> Pool<ConnectionManager<PgConnection>> {
+    let url = format!(
         "postgresql://{}:{}@{}:{}",
         opt.user(),
         opt.password(),
@@ -40,6 +42,9 @@ pub fn establish_connection(opt: PgConnectionOptions) -> PgConnection {
         opt.port()
     );
 
-    PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+    let manager = ConnectionManager::<PgConnection>::new(url);
+    Pool::builder()
+        .test_on_check_out(true)
+        .build(manager)
+        .expect("Could not build connection pool")
 }

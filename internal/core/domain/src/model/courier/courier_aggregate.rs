@@ -49,6 +49,22 @@ impl Courier {
         })
     }
 
+    pub fn restore(
+        id: CourierId,
+        name: CourierName,
+        speed: CourierSpeed,
+        location: Location,
+        storage_places: Vec<StoragePlace>,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            speed,
+            location,
+            storage_places,
+        }
+    }
+
     pub fn id(&self) -> &CourierId {
         &self.id
     }

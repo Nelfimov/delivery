@@ -1,10 +1,9 @@
 diesel::table! {
-    orders {
+    couriers {
         id -> Uuid,
-        courier_id -> Nullable<Uuid>,
+        name -> Text,
+        speed -> SmallInt,
         location_x -> SmallInt,
         location_y -> SmallInt,
-        volume -> SmallInt,
-        status -> Text,
     }
 }
