@@ -4,12 +4,40 @@ use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::courier::courier_aggregate::CourierId;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum OrderStatus {
     Created,
     Assigned,
     Completed,
+}
+
+impl From<OrderStatus> for String {
+    fn from(value: OrderStatus) -> Self {
+        match value {
+            OrderStatus::Created => "created".into(),
+            OrderStatus::Assigned => "assigned".into(),
+            OrderStatus::Completed => "completed".into(),
+        }
+    }
+}
+
+impl From<&OrderStatus> for String {
+    fn from(value: &OrderStatus) -> Self {
+        match value {
+            OrderStatus::Created => "created".into(),
+            OrderStatus::Assigned => "assigned".into(),
+            OrderStatus::Completed => "completed".into(),
+        }
+    }
+}
+
+impl Display for OrderStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let v: String = self.into();
+        write!(f, "{}", v)
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -52,6 +80,22 @@ impl Order {
             status: OrderStatus::Created,
             courier_id: None,
         })
+    }
+
+    pub fn restore(
+        id: OrderId,
+        courier_id: Option<CourierId>,
+        location: Location,
+        volume: Volume,
+        status: OrderStatus,
+    ) -> Self {
+        Self {
+            id,
+            location,
+            volume,
+            status,
+            courier_id,
+        }
     }
 
     pub fn assign(&mut self, courier_id: &CourierId) -> Result<(), DomainModelError> {

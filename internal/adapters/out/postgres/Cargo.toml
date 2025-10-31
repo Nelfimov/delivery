@@ -1,0 +1,21 @@
+[package]
+name = "out_postgres"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+diesel = { workspace = true }
+domain = { path = "../../../core/domain" }
+uuid = { workspace = true }
+ports = { path = "../../../core/ports/" }
+
+[dev-dependencies]
+testcontainers = { workspace = true }
+testcontainers-modules = { workspace = true }
+tokio = { workspace = true }
+diesel = { workspace = true }
+uuid = { workspace = true }
+
+[profile.dev]
+incremental = false
+codegen-units = 1

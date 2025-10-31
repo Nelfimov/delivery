@@ -1,6 +1,8 @@
 use rand::Rng;
 use rand::rng;
 
+use crate::errors::domain_model_errors::DomainModelError;
+
 #[derive(PartialEq, Debug, Clone)]
 pub struct Location {
     x: u8,
@@ -8,19 +10,19 @@ pub struct Location {
 }
 
 impl Location {
-    pub fn new(x: u8, y: u8) -> Result<Self, String> {
+    pub fn new(x: u8, y: u8) -> Result<Self, DomainModelError> {
         if x * y == 0 {
-            return Err(format!(
+            return Err(DomainModelError::ArgumentCannotBeZero(format!(
                 "coordinates cannot be less than 1. x: {}, y: {}",
                 x, y
-            ));
+            )));
         }
 
         if x > 10 || y > 10 {
-            return Err(format!(
+            return Err(DomainModelError::UnmetRequirement(format!(
                 "coordinates cannot be more than 10. x: {}, y: {}",
                 x, y
-            ));
+            )));
         }
 
         Ok(Self { x, y })

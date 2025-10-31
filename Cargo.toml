@@ -1,3 +1,18 @@
 [workspace]
 resolver = "3"
-members = ["internal/core/domain"]
+members = [
+  "internal/adapters/out/postgres",
+  "internal/core/domain",
+  "internal/core/ports",
+]
+
+[workspace.dependencies]
+diesel = { version = "2.3.3", features = ["r2d2", "postgres", "uuid"] }
+uuid = { version = "1.18.1", features = ["v4"] }
+testcontainers = { version = "0.25", features = ["blocking"] }
+testcontainers-modules = { version = "0.13", features = ["postgres"] }
+tokio = { version = "1.41", features = [
+  "macros",
+  "rt-multi-thread",
+  "process",
+] }

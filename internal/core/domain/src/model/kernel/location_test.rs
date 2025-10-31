@@ -19,9 +19,9 @@ fn creates_random() {
 
 #[test]
 fn compares() {
-    let a = Location::new(1, 1);
-    let b = Location::new(2, 2);
-    let c = Location::new(1, 1);
+    let a = Location::new(1, 1).unwrap();
+    let b = Location::new(2, 2).unwrap();
+    let c = Location::new(1, 1).unwrap();
 
     assert_ne!(a, b);
     assert_eq!(a, c);

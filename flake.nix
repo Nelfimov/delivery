@@ -23,6 +23,7 @@
             rustfmt
             pkgs.clippy
             pkgs.go
+            pkgs.postgresql
           ];
 
           shellHook = ''

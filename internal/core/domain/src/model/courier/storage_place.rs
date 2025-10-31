@@ -38,6 +38,20 @@ impl StoragePlace {
         })
     }
 
+    pub fn restore(
+        id: Uuid,
+        name: String,
+        total_volume: Volume,
+        order_id: Option<OrderId>,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            total_volume,
+            order_id,
+        }
+    }
+
     pub fn id(&self) -> &Uuid {
         &self.id
     }
