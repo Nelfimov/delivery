@@ -13,18 +13,26 @@ impl<'a> UnitOfWork<'a> {
     pub fn new(conn: &'a mut PgConnection) -> Self {
         Self { connection: conn }
     }
-
-    pub fn courier_repo(&mut self) -> CourierRepository<'_> {
-        CourierRepository::new(self.connection)
-    }
-
-    pub fn order_repo(&mut self) -> OrderRepository<'_> {
-        OrderRepository::new(self.connection)
-    }
 }
 
 impl<'a> UnitOfWorkPort for UnitOfWork<'a> {
     type Uow<'tx> = UnitOfWork<'tx>;
+    type CourierRepo<'tx>
+        = CourierRepository<'tx>
+    where
+        Self: 'tx;
+    type OrderRepo<'tx>
+        = OrderRepository<'tx>
+    where
+        Self: 'tx;
+
+    fn courier_repo(&mut self) -> Self::CourierRepo<'_> {
+        CourierRepository::new(self.connection)
+    }
+
+    fn order_repo(&mut self) -> Self::OrderRepo<'_> {
+        OrderRepository::new(self.connection)
+    }
 
     fn transaction<F, T>(&mut self, f: F) -> Result<T, RepositoryError>
     where
