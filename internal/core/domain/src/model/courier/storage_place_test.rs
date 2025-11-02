@@ -58,15 +58,15 @@ fn should_place_order() {
     let storage_volume = Volume::new(50).unwrap();
     let low_volume = Volume::new(30).unwrap();
     let high_volume = Volume::new(60).unwrap();
-    let order_id = Some(OrderId::new(Uuid::new_v4()));
+    let order_id = OrderId::new(Uuid::new_v4());
 
     let mut storage = StoragePlace::new(String::from("backpack"), storage_volume, None).unwrap();
 
-    let _ = storage.place_order(order_id.unwrap(), high_volume);
-    assert_ne!(storage.order_id(), &order_id);
+    let _ = storage.place_order(order_id, high_volume);
+    assert_ne!(storage.order_id(), &Some(order_id));
 
-    let _ = storage.place_order(order_id.unwrap(), low_volume);
-    assert_eq!(storage.order_id(), &order_id);
+    let _ = storage.place_order(order_id, low_volume);
+    assert_eq!(storage.order_id(), &Some(order_id));
 }
 
 #[test]

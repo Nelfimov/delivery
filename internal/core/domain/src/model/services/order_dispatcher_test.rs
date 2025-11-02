@@ -51,7 +51,7 @@ fn fails_when_no_available_couriers() {
         Location::new(9, 9).unwrap(),
     )
     .unwrap();
-    courier_bob.take_order(order.id(), Volume::new(2).unwrap());
+    let _ = courier_bob.take_order(order.id(), Volume::new(2).unwrap());
 
     let mut courier_rick = Courier::new(
         CourierName("Rick".into()),
@@ -59,7 +59,7 @@ fn fails_when_no_available_couriers() {
         Location::new(5, 5).unwrap(),
     )
     .unwrap();
-    courier_rick.take_order(order.id(), Volume::new(2).unwrap());
+    let _ = courier_rick.take_order(order.id(), Volume::new(2).unwrap());
 
     let mut couriers = vec![];
 
