@@ -70,9 +70,7 @@ impl PartialEq for Order {
 impl Eq for Order {}
 
 impl Order {
-    pub fn new(id: OrderId, location: Location, volume: u16) -> Result<Self, DomainModelError> {
-        let volume = Volume::new(volume)?;
-
+    pub fn new(id: OrderId, location: Location, volume: Volume) -> Result<Self, DomainModelError> {
         Ok(Self {
             id,
             location,

@@ -17,7 +17,7 @@ fn fails_when_order_not_created() {
     let mut order = Order::new(
         OrderId::new(Uuid::new_v4()),
         Location::new(1, 1).unwrap(),
-        10,
+        Volume::new(10).unwrap(),
     )
     .unwrap();
     let mut couriers = vec![
@@ -41,7 +41,7 @@ fn fails_when_no_available_couriers() {
     let mut order = Order::new(
         OrderId::new(Uuid::new_v4()),
         Location::new(1, 1).unwrap(),
-        10,
+        Volume::new(10).unwrap(),
     )
     .unwrap();
 
@@ -72,7 +72,7 @@ fn picks_fastest_available_courier() {
     let mut order = Order::new(
         OrderId::new(Uuid::new_v4()),
         Location::new(1, 1).unwrap(),
-        10,
+        Volume::new(10).unwrap(),
     )
     .unwrap();
     let courier_bob = Courier::new(
