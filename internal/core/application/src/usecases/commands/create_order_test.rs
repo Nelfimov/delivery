@@ -1,0 +1,94 @@
+use domain::model::order::order_aggregate::Order;
+use domain::model::order::order_aggregate::OrderId;
+use ports::errors::RepositoryError;
+use ports::order_repository_port::OrderRepositoryPort;
+use std::sync::Arc;
+use std::sync::Mutex;
+use uuid::Uuid;
+
+use crate::usecases::CommandHandler;
+
+use super::create_order_command::CreateOrderCommand;
+use super::create_order_handler::CreateOrderHandler;
+
+struct MockOrderRepository {
+    added_order_id: Arc<Mutex<Option<OrderId>>>,
+    fail_on_add: bool,
+}
+
+impl MockOrderRepository {
+    fn new(added_order_id: Arc<Mutex<Option<OrderId>>>) -> Self {
+        Self {
+            added_order_id,
+            fail_on_add: false,
+        }
+    }
+
+    fn new_failing(added_order_id: Arc<Mutex<Option<OrderId>>>) -> Self {
+        Self {
+            added_order_id,
+            fail_on_add: true,
+        }
+    }
+}
+
+impl OrderRepositoryPort for MockOrderRepository {
+    fn add(&mut self, order: &Order) -> Result<(), RepositoryError> {
+        if self.fail_on_add {
+            return Err(RepositoryError::DatabaseError("db unavailable".to_string()));
+        }
+
+        let mut slot = self.added_order_id.lock().expect("mutex poisoned");
+        *slot = Some(order.id());
+        Ok(())
+    }
+
+    fn update(&mut self, _order: &Order) -> Result<(), RepositoryError> {
+        unimplemented!("not required for this test");
+    }
+
+    fn get_by_id(&mut self, _id: OrderId) -> Result<Order, RepositoryError> {
+        unimplemented!("not required for this test");
+    }
+
+    fn get_any_new(&mut self) -> Result<Order, RepositoryError> {
+        unimplemented!("not required for this test");
+    }
+
+    fn get_all_assigned(&mut self) -> Result<Vec<Order>, RepositoryError> {
+        unimplemented!("not required for this test");
+    }
+}
+
+#[test]
+fn handle_persists_order_via_repository() {
+    let stored_id = Arc::new(Mutex::new(None));
+    let repo = MockOrderRepository::new(stored_id.clone());
+
+    let mut handler = CreateOrderHandler::new(repo);
+    let command = CreateOrderCommand::new(Uuid::new_v4(), "Tverskaya street 1".to_string(), 10)
+        .expect("command should be valid");
+
+    handler
+        .execute(command)
+        .expect("handler should persist order");
+
+    let observed = *stored_id.lock().expect("mutex poisoned");
+    assert!(
+        observed.is_some(),
+        "order id should be recorded in repository"
+    );
+}
+
+#[test]
+fn handle_propagates_repository_error() {
+    let stored_id = Arc::new(Mutex::new(None));
+    let repo = MockOrderRepository::new_failing(stored_id);
+
+    let mut handler = CreateOrderHandler::new(repo);
+    let command = CreateOrderCommand::new(Uuid::new_v4(), "Nevsky prospect 10".to_string(), 5)
+        .expect("command should be valid");
+
+    let result = handler.execute(command);
+    assert!(result.is_err(), "handler must surface repository failures");
+}
