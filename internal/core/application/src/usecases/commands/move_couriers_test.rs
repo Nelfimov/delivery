@@ -12,6 +12,7 @@ use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
 use domain::model::order::order_aggregate::OrderStatus;
 use ports::courier_repository_port::CourierRepositoryPort;
+use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
@@ -162,6 +163,10 @@ impl CourierRepositoryPort for TestCourierRepository {
 
     fn get_all_free(&mut self) -> Result<Vec<Courier>, RepositoryError> {
         Ok(vec![])
+    }
+
+    fn get_all_couriers(&mut self) -> Result<Vec<GetAllCouriersResponse>, RepositoryError> {
+        unimplemented!()
     }
 }
 

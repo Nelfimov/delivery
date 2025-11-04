@@ -4,6 +4,7 @@ use domain::model::courier::courier_aggregate::CourierName;
 use domain::model::courier::courier_aggregate::CourierSpeed;
 use domain::model::courier::storage_place::StoragePlace;
 use domain::model::kernel::location::Location;
+use ports::courier_repository_port::GetAllCouriersResponse;
 
 use crate::courier::courier_dto::CourierDto;
 use crate::storage_place::storage_place_dto::StoragePlaceDto;
