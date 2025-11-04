@@ -1,3 +1,5 @@
+pub mod assign_order_command;
+pub mod assign_order_handler;
 pub mod create_order_command;
 pub mod create_order_handler;
 #[cfg(test)]
