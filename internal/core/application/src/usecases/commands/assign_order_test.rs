@@ -110,7 +110,6 @@ impl OrderRepositoryPort for TestOrderRepository {
             .orders
             .borrow()
             .iter()
-            .filter(|order| matches!(order.status, OrderStatus::Assigned))
             .map(StoredOrder::to_order)
             .collect())
     }
@@ -144,7 +143,7 @@ impl CourierRepositoryPort for TestCourierRepository {
     }
 
     fn get_all_free(&mut self) -> Result<Vec<Courier>, RepositoryError> {
-        Ok(self.couriers.borrow())
+        Ok(self.couriers.borrow().clone())
     }
 
     fn get_all_couriers(&mut self) -> Result<Vec<GetAllCouriersResponse>, RepositoryError> {
