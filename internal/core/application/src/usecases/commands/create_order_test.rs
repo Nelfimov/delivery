@@ -43,11 +43,11 @@ impl OrderRepositoryPort for MockOrderRepository {
         Ok(())
     }
 
-    fn update(&mut self, _order: &Order) -> Result<(), RepositoryError> {
+    fn update(&mut self, _: &Order) -> Result<(), RepositoryError> {
         unimplemented!("not required for this test");
     }
 
-    fn get_by_id(&mut self, _id: OrderId) -> Result<Order, RepositoryError> {
+    fn get_by_id(&mut self, _: OrderId) -> Result<Order, RepositoryError> {
         unimplemented!("not required for this test");
     }
 
@@ -56,6 +56,10 @@ impl OrderRepositoryPort for MockOrderRepository {
     }
 
     fn get_all_assigned(&mut self) -> Result<Vec<Order>, RepositoryError> {
+        unimplemented!("not required for this test");
+    }
+
+    fn raw(&mut self, _: String) -> Result<Vec<Order>, RepositoryError> {
         unimplemented!("not required for this test");
     }
 }

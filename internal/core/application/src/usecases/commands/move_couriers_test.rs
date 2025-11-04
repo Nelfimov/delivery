@@ -122,6 +122,10 @@ impl OrderRepositoryPort for TestOrderRepository {
             .map(StoredOrder::to_order)
             .collect())
     }
+
+    fn raw(&mut self, _query: String) -> Result<Vec<Order>, RepositoryError> {
+        unimplemented!()
+    }
 }
 
 struct TestCourierRepository {

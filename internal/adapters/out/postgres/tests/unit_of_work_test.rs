@@ -27,7 +27,7 @@ async fn test_transaction_commit_and_rollback() {
 
     let TestPg {
         connections,
-        container: _,
+        _container,
     } = test_pg;
 
     let main_connection = &mut connections.get().unwrap();
