@@ -1,6 +1,8 @@
 use application::errors::command_errors::CommandError;
 use application::errors::query_errors::QueryError;
 use application::usecases::CommandHandler;
+use application::usecases::commands::create_courier_command::CreateCourierCommand;
+use application::usecases::commands::create_courier_handler::CreateCourierHandler;
 use application::usecases::commands::create_order_command::CreateOrderCommand;
 use application::usecases::commands::create_order_handler::CreateOrderHandler;
 use application::usecases::queries::get_all_couriers_handler::GetAllCouriersHandler;
@@ -11,6 +13,8 @@ use async_trait::async_trait;
 use axum::http::Method;
 use axum_extra::extract::CookieJar;
 use axum_extra::extract::Host;
+use domain::model::courier::courier_aggregate::CourierName;
+use domain::model::courier::courier_aggregate::CourierSpeed;
 use openapi::apis::ErrorHandler;
 use openapi::apis::default::CreateCourierResponse;
 use openapi::apis::default::CreateOrderResponse;
@@ -77,7 +81,34 @@ where
         cookies: &CookieJar,
         body: &Option<models::NewCourier>,
     ) -> Result<CreateCourierResponse, E> {
-        todo!()
+        let repo = self.state().courier_repo();
+        let mut handler = CreateCourierHandler::new(repo);
+
+        let command =
+            match CreateCourierCommand::new(CourierName("Bob".to_string()), CourierSpeed(5)) {
+                Ok(cmd) => cmd,
+                Err(err) => {
+                    return Ok(CreateCourierResponse::Status400(models::Error {
+                        message: err.to_string(),
+                        code: 400,
+                    }));
+                }
+            };
+
+        match handler.execute(command) {
+            Ok(_) => Ok(CreateCourierResponse::Status201),
+            Err(err) => {
+                let code = match &err {
+                    CommandError::ArgumentError(_) => 400,
+                    CommandError::ExecutionError(_) => 409,
+                };
+
+                Ok(CreateCourierResponse::Status409(models::Error {
+                    message: err.to_string(),
+                    code,
+                }))
+            }
+        }
     }
 
     async fn create_order(
