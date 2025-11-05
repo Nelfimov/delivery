@@ -5,6 +5,8 @@ members = [
   "internal/core/application",
   "internal/core/domain",
   "internal/core/ports",
+  "internal/generated/servers",
+  "internal/adapters/in/http",
 ]
 
 [workspace.dependencies]
@@ -17,3 +19,4 @@ tokio = { version = "1.41", features = [
   "rt-multi-thread",
   "process",
 ] }
+axum = { version = "0.8" }
