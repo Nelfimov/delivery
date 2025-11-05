@@ -8,6 +8,7 @@ diesel = { workspace = true }
 domain = { path = "../../../core/domain" }
 uuid = { workspace = true }
 ports = { path = "../../../core/ports/" }
+r2d2 = { workspace = true }
 
 [dev-dependencies]
 testcontainers = { workspace = true }

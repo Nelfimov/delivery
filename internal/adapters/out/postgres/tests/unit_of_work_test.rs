@@ -30,8 +30,7 @@ async fn test_transaction_commit_and_rollback() {
         _container,
     } = test_pg;
 
-    let main_connection = &mut connections.get().unwrap();
-    let mut uow = UnitOfWork::new(main_connection);
+    let mut uow = UnitOfWork::new(connections.clone());
 
     let result: Result<(), RepositoryError> = uow.transaction(|tx| {
         let dto = CourierDto {
@@ -44,7 +43,7 @@ async fn test_transaction_commit_and_rollback() {
 
         insert_into(out_postgres::courier::courier_schema::couriers::table)
             .values(&dto)
-            .execute(tx.connection)
+            .execute(&mut tx.pool.get().unwrap())
             .unwrap();
 
         Err(RepositoryError::MapError("force rollback".into()))
@@ -70,7 +69,7 @@ async fn test_transaction_commit_and_rollback() {
 
         insert_into(out_postgres::courier::courier_schema::couriers::table)
             .values(&dto)
-            .execute(tx.connection)
+            .execute(&mut tx.pool.get().unwrap())
             .unwrap();
 
         Ok(())

@@ -1,6 +1,8 @@
 use diesel::PgConnection;
 use diesel::insert_into;
 use diesel::prelude::*;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::Pool;
 use diesel::sql_query;
 use diesel::update;
 use domain::model::order::order_aggregate::Order;
@@ -14,22 +16,28 @@ use crate::errors::postgres_error::PostgresError;
 use super::order_dto::OrderDto;
 use super::order_schema::orders::dsl::*;
 
-pub struct OrderRepository<'a> {
-    connection: &'a mut PgConnection,
+pub struct OrderRepository {
+    pool: Pool<ConnectionManager<PgConnection>>,
 }
 
-impl<'a> OrderRepository<'a> {
-    pub fn new(connection: &'a mut PgConnection) -> Self {
-        Self { connection }
+impl OrderRepository {
+    pub fn new(pool: Pool<ConnectionManager<PgConnection>>) -> Self {
+        Self { pool }
     }
 }
 
-impl<'a> OrderRepositoryPort for OrderRepository<'a> {
+impl OrderRepositoryPort for OrderRepository {
     fn add(&mut self, order: &Order) -> Result<(), RepositoryError> {
         let dto: OrderDto = order.into();
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
         let _ = insert_into(orders)
             .values(&dto)
-            .execute(self.connection)
+            .execute(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
         Ok(())
@@ -37,19 +45,30 @@ impl<'a> OrderRepositoryPort for OrderRepository<'a> {
 
     fn update(&mut self, order: &Order) -> Result<(), RepositoryError> {
         let dto: OrderDto = order.into();
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
 
         update(orders.find(dto.id))
             .set(&dto)
-            .execute(self.connection)
+            .execute(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
         Ok(())
     }
 
     fn get_by_id(&mut self, order_id: OrderId) -> Result<Order, RepositoryError> {
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
         let order: OrderDto = orders
             .find(order_id.value())
-            .first(self.connection)
+            .first(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
@@ -57,9 +76,15 @@ impl<'a> OrderRepositoryPort for OrderRepository<'a> {
     }
 
     fn get_any_new(&mut self) -> Result<Order, RepositoryError> {
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
         let row: OrderDto = orders
             .filter(status.eq(OrderStatus::Created.to_string()))
-            .first(self.connection)
+            .first(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
@@ -70,10 +95,15 @@ impl<'a> OrderRepositoryPort for OrderRepository<'a> {
 
     fn get_all_assigned(&mut self) -> Result<Vec<Order>, RepositoryError> {
         let s: String = OrderStatus::Assigned.into();
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
 
         let rows: Vec<OrderDto> = orders
             .filter(status.eq(s))
-            .load(self.connection)
+            .load(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
@@ -86,8 +116,14 @@ impl<'a> OrderRepositoryPort for OrderRepository<'a> {
     }
 
     fn raw(&mut self, query: String) -> Result<Vec<Order>, RepositoryError> {
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
         let rows: Vec<OrderDto> = sql_query(query)
-            .load(self.connection)
+            .load(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 

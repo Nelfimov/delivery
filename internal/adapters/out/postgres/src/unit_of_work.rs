@@ -1,57 +1,61 @@
-use crate::courier::courier_repository::CourierRepository;
-use crate::order::order_repository::OrderRepository;
 use diesel::PgConnection;
 use diesel::prelude::*;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::Pool;
 use ports::errors::RepositoryError;
 use ports::unit_of_work_port::UnitOfWorkPort;
 
-pub struct UnitOfWork<'a> {
-    pub connection: &'a mut PgConnection,
+use crate::courier::courier_repository::CourierRepository;
+use crate::errors::postgres_error::PostgresError;
+use crate::order::order_repository::OrderRepository;
+
+pub struct UnitOfWork {
+    pub pool: Pool<ConnectionManager<PgConnection>>,
 }
 
-impl<'a> UnitOfWork<'a> {
-    pub fn new(conn: &'a mut PgConnection) -> Self {
-        Self { connection: conn }
+impl UnitOfWork {
+    pub fn new(pool: Pool<ConnectionManager<PgConnection>>) -> Self {
+        Self { pool }
     }
 }
 
-impl<'a> UnitOfWorkPort for UnitOfWork<'a> {
-    type Uow<'tx> = UnitOfWork<'tx>;
-    type CourierRepo<'tx>
-        = CourierRepository<'tx>
-    where
-        Self: 'tx;
-    type OrderRepo<'tx>
-        = OrderRepository<'tx>
-    where
-        Self: 'tx;
+impl UnitOfWorkPort for UnitOfWork {
+    type Uow = UnitOfWork;
+    type CourierRepo = CourierRepository;
+    type OrderRepo = OrderRepository;
 
-    fn courier_repo(&mut self) -> Self::CourierRepo<'_> {
-        CourierRepository::new(self.connection)
+    fn courier_repo(&mut self) -> Self::CourierRepo {
+        CourierRepository::new(self.pool.clone())
     }
 
-    fn order_repo(&mut self) -> Self::OrderRepo<'_> {
-        OrderRepository::new(self.connection)
+    fn order_repo(&mut self) -> Self::OrderRepo {
+        OrderRepository::new(self.pool.clone())
     }
 
     fn transaction<F, T>(&mut self, f: F) -> Result<T, RepositoryError>
     where
-        F: for<'tx> FnOnce(&mut Self::Uow<'tx>) -> Result<T, RepositoryError>,
+        F: for<'tx> FnOnce(&mut Self::Uow) -> Result<T, RepositoryError>,
     {
         let mut captured: Option<RepositoryError> = None;
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
 
-        let res = self
-            .connection
-            .transaction::<T, diesel::result::Error, _>(|tx| {
-                let mut tx_uow = UnitOfWork { connection: tx };
-                match f(&mut tx_uow) {
-                    Ok(v) => Ok(v),
-                    Err(e) => {
-                        captured = Some(e);
-                        Err(diesel::result::Error::RollbackTransaction)
-                    }
+        let res = connection.transaction::<T, diesel::result::Error, _>(|tx| {
+            let mut tx_uow = UnitOfWork {
+                pool: self.pool.clone(),
+            };
+
+            match f(&mut tx_uow) {
+                Ok(v) => Ok(v),
+                Err(e) => {
+                    captured = Some(e);
+                    Err(diesel::result::Error::RollbackTransaction)
                 }
-            });
+            }
+        });
 
         match res {
             Ok(v) => Ok(v),

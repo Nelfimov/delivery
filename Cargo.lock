@@ -1566,6 +1566,7 @@ dependencies = [
  "diesel",
  "domain",
  "ports",
+ "r2d2",
  "testcontainers",
  "testcontainers-modules",
  "tokio",

@@ -20,9 +20,9 @@ async fn main() {
         config.db_password,
     ));
 
-    let courier_repo = CourierRepository::new(&mut pool.get().expect("connection unavailable"));
-    let order_repo = OrderRepository::new(&mut pool.get().expect("connection unavailable"));
-    let uow = UnitOfWork::new(&mut pool.get().expect("connection unavailable"));
+    let courier_repo = CourierRepository::new(pool.clone());
+    let order_repo = OrderRepository::new(pool.clone());
+    let uow = UnitOfWork::new(pool.clone());
 
     let app_state = AppState::new(courier_repo, order_repo, uow);
 

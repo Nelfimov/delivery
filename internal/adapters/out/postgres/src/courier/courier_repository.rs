@@ -1,5 +1,7 @@
 use diesel::insert_into;
 use diesel::prelude::*;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::Pool;
 use diesel::update;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
@@ -25,22 +27,28 @@ use crate::storage_place::storage_place_schema::storage_places::order_id;
 
 use super::courier_dto::CourierDto;
 
-pub struct CourierRepository<'a> {
-    connection: &'a mut PgConnection,
+pub struct CourierRepository {
+    pool: Pool<ConnectionManager<PgConnection>>,
 }
 
-impl<'a> CourierRepository<'a> {
-    pub fn new(connection: &'a mut PgConnection) -> Self {
-        Self { connection }
+impl CourierRepository {
+    pub fn new(pool: Pool<ConnectionManager<PgConnection>>) -> Self {
+        Self { pool }
     }
 }
 
-impl<'a> CourierRepositoryPort for CourierRepository<'a> {
+impl CourierRepositoryPort for CourierRepository {
     fn add(&mut self, c: Courier) -> Result<(), RepositoryError> {
         let dto: CourierDto = c.into();
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
         insert_into(couriers)
             .values(&dto)
-            .execute(self.connection)
+            .execute(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
         Ok(())
@@ -48,20 +56,31 @@ impl<'a> CourierRepositoryPort for CourierRepository<'a> {
 
     fn update(&mut self, c: Courier) -> Result<(), RepositoryError> {
         let dto: CourierDto = c.into();
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
 
         update(couriers.find(dto.id))
             .set(&dto)
-            .execute(self.connection)
+            .execute(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
         Ok(())
     }
 
     fn get_by_id(&mut self, c_id: CourierId) -> Result<Courier, RepositoryError> {
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
         let results: Vec<(CourierDto, StoragePlaceDto)> = couriers
             .inner_join(storage_places)
             .filter(id.eq(c_id.0))
-            .load(self.connection)
+            .load(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
@@ -85,10 +104,16 @@ impl<'a> CourierRepositoryPort for CourierRepository<'a> {
     }
 
     fn get_all_free(&mut self) -> Result<Vec<Courier>, RepositoryError> {
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
         let rows: Vec<(CourierDto, StoragePlaceDto)> = couriers
             .inner_join(storage_places)
             .filter(order_id.is_null())
-            .load(self.connection)
+            .load(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
@@ -113,9 +138,15 @@ impl<'a> CourierRepositoryPort for CourierRepository<'a> {
     }
 
     fn get_all_couriers(&mut self) -> Result<Vec<GetAllCouriersResponse>, RepositoryError> {
+        let mut connection = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
         let rows = table
             .select((id, name, location_x, location_y))
-            .load::<(Uuid, String, i16, i16)>(self.connection)
+            .load::<(Uuid, String, i16, i16)>(&mut connection)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
