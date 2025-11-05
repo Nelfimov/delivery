@@ -1197,11 +1197,14 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-extra",
+ "domain",
  "openapi",
+ "ports",
  "tokio",
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

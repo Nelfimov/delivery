@@ -1,9 +1,13 @@
+use ports::courier_repository_port::CourierRepositoryPort;
+use ports::order_repository_port::OrderRepositoryPort;
+use ports::unit_of_work_port::UnitOfWorkPort;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tracing_subscriber::fmt::init;
 
 use crate::handler::ServerImpl;
+use crate::state::AppState;
 
 async fn shutdown_signal() {
     let ctrl_c = async {
@@ -29,10 +33,18 @@ async fn shutdown_signal() {
     }
 }
 
-pub async fn start_server(addr: &str) {
+pub async fn start_server<CR, OR, UOW>(addr: &str, state: AppState<CR, OR, UOW>)
+where
+    CR: CourierRepositoryPort + Send + Sync + 'static,
+    OR: OrderRepositoryPort + Send + Sync + 'static,
+    UOW: UnitOfWorkPort + Send + Sync + 'static,
+{
     init();
 
-    let app = openapi::server::new::<Arc<ServerImpl>, ServerImpl, ()>(Arc::new(ServerImpl));
+    let shared_state = Arc::new(state);
+    let handler = Arc::new(ServerImpl::new(shared_state));
+    let app =
+        openapi::server::new::<Arc<ServerImpl<CR, OR, UOW>>, ServerImpl<CR, OR, UOW>, ()>(handler);
 
     // let app = app.layer(...);
 
