@@ -24,6 +24,8 @@
             pkgs.clippy
             pkgs.go
             pkgs.postgresql
+            pkgs.diesel-cli
+            pkgs.openapi-generator-cli
           ];
 
           shellHook = ''
