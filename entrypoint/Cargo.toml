@@ -12,3 +12,5 @@ serde = { workspace = true }
 envy = { workspace = true }
 tracing-subscriber = { workspace = true }
 tracing = { workspace = true }
+tokio-cron-scheduler = { workspace = true }
+application = { path = "../internal/core/application" }

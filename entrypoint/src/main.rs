@@ -1,14 +1,16 @@
 mod config;
+mod cron;
 
 use in_http::server::start_server;
 use in_http::state::AppState;
 use out_postgres::connection::PgConnectionOptions;
 use out_postgres::connection::establish_connection;
-
-use config::Config;
 use out_postgres::courier::courier_repository::CourierRepository;
 use out_postgres::order::order_repository::OrderRepository;
 use out_postgres::unit_of_work::UnitOfWork;
+
+use crate::config::Config;
+use crate::cron::start_crons;
 
 #[tokio::main]
 async fn main() {
@@ -36,9 +38,15 @@ async fn main() {
 
     let app_state = AppState::new(courier_repo, order_repo, uow);
 
+    let mut scheduler = start_crons(pool.clone()).await;
+
     start_server(
         &format!("{}:{}", config.server_address, config.server_port),
         app_state,
     )
     .await;
+
+    if let Err(error) = scheduler.shutdown().await {
+        tracing::error!(?error, "failed to shutdown cron scheduler");
+    }
 }

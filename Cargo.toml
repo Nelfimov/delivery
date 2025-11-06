@@ -30,3 +30,4 @@ axum-extra = { version = "0.12", features = ["cookie", "query"] }
 serde = { version = "1.0", features = ["derive"] }
 envy = { version = "0.4" }
 r2d2 = { version = "0.8" }
+tokio-cron-scheduler = "0.15"
