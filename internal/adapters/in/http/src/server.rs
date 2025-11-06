@@ -4,7 +4,6 @@ use ports::unit_of_work_port::UnitOfWorkPort;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::signal;
-use tracing_subscriber::fmt::init;
 
 use crate::handler::ServerImpl;
 use crate::state::AppState;
@@ -35,12 +34,10 @@ async fn shutdown_signal() {
 
 pub async fn start_server<CR, OR, UOW>(addr: &str, state: AppState<CR, OR, UOW>)
 where
-    CR: CourierRepositoryPort + Send + Sync + 'static,
-    OR: OrderRepositoryPort + Send + Sync + 'static,
-    UOW: UnitOfWorkPort + Send + Sync + 'static,
+    CR: CourierRepositoryPort + Send + 'static,
+    OR: OrderRepositoryPort + Send + 'static,
+    UOW: UnitOfWorkPort + Send + 'static,
 {
-    init();
-
     let shared_state = Arc::new(state);
     let handler = Arc::new(ServerImpl::new(shared_state));
     let app =

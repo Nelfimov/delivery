@@ -43,7 +43,7 @@ async fn test_transaction_commit_and_rollback() {
 
         insert_into(out_postgres::courier::courier_schema::couriers::table)
             .values(&dto)
-            .execute(&mut tx.pool.get().unwrap())
+            .execute(tx.transaction_connection().unwrap())
             .unwrap();
 
         Err(RepositoryError::MapError("force rollback".into()))
@@ -69,7 +69,7 @@ async fn test_transaction_commit_and_rollback() {
 
         insert_into(out_postgres::courier::courier_schema::couriers::table)
             .values(&dto)
-            .execute(&mut tx.pool.get().unwrap())
+            .execute(tx.transaction_connection().unwrap())
             .unwrap();
 
         Ok(())

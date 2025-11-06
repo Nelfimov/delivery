@@ -6,8 +6,8 @@ fn default_server_address() -> String {
     String::from("0.0.0.0")
 }
 
-fn default_server_port() -> u8 {
-    3000
+fn default_server_port() -> String {
+    String::from("3000")
 }
 
 #[derive(Debug, Deserialize)]
@@ -19,7 +19,7 @@ pub struct Config {
     #[serde(default = "default_server_address")]
     pub server_address: String,
     #[serde(default = "default_server_port")]
-    pub server_port: u8,
+    pub server_port: String,
 }
 
 impl Config {

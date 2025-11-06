@@ -33,18 +33,18 @@ use crate::state::AppState;
 
 pub struct ServerImpl<CR, OR, UOW>
 where
-    CR: CourierRepositoryPort + Send + Sync + 'static,
-    OR: OrderRepositoryPort + Send + Sync + 'static,
-    UOW: UnitOfWorkPort + Send + Sync + 'static,
+    CR: CourierRepositoryPort + Send + 'static,
+    OR: OrderRepositoryPort + Send + 'static,
+    UOW: UnitOfWorkPort + Send + 'static,
 {
     state: Arc<AppState<CR, OR, UOW>>,
 }
 
 impl<CR, OR, UOW> ServerImpl<CR, OR, UOW>
 where
-    CR: CourierRepositoryPort + Send + Sync + 'static,
-    OR: OrderRepositoryPort + Send + Sync + 'static,
-    UOW: UnitOfWorkPort + Send + Sync + 'static,
+    CR: CourierRepositoryPort + Send + 'static,
+    OR: OrderRepositoryPort + Send + 'static,
+    UOW: UnitOfWorkPort + Send + 'static,
 {
     pub fn new(state: Arc<AppState<CR, OR, UOW>>) -> Self {
         Self { state }
@@ -58,9 +58,9 @@ where
 #[async_trait]
 impl<CR, OR, UOW, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW>
 where
-    CR: CourierRepositoryPort + Send + Sync + 'static,
-    OR: OrderRepositoryPort + Send + Sync + 'static,
-    UOW: UnitOfWorkPort + Send + Sync + 'static,
+    CR: CourierRepositoryPort + Send + 'static,
+    OR: OrderRepositoryPort + Send + 'static,
+    UOW: UnitOfWorkPort + Send + 'static,
     E: Send + Sync + Debug + 'static,
 {
 }
@@ -69,9 +69,9 @@ where
 #[async_trait]
 impl<CR, OR, UOW, E> DefaultApi<E> for ServerImpl<CR, OR, UOW>
 where
-    CR: CourierRepositoryPort + Send + Sync + 'static,
-    OR: OrderRepositoryPort + Send + Sync + 'static,
-    UOW: UnitOfWorkPort + Send + Sync + 'static,
+    CR: CourierRepositoryPort + Send + 'static,
+    OR: OrderRepositoryPort + Send + 'static,
+    UOW: UnitOfWorkPort + Send + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(

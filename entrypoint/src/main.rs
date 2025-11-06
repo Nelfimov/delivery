@@ -12,12 +12,22 @@ use out_postgres::unit_of_work::UnitOfWork;
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+
     let config = Config::from_env().expect("missing env variables");
+    tracing::event!(
+        tracing::Level::INFO,
+        "Start server: {}:{}",
+        config.server_address,
+        config.server_port
+    );
     let pool = establish_connection(PgConnectionOptions::new(
-        config.db_host,
+        config.db_host.clone(),
         config.db_port,
-        config.db_user,
-        config.db_password,
+        config.db_user.clone(),
+        config.db_password.clone(),
     ));
 
     let courier_repo = CourierRepository::new(pool.clone());

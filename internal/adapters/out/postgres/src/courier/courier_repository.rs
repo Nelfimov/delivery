@@ -1,7 +1,9 @@
+use diesel::PgConnection;
 use diesel::insert_into;
 use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
+use diesel::r2d2::PooledConnection;
 use diesel::update;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
@@ -11,6 +13,8 @@ use ports::courier_repository_port::CourierRepositoryPort;
 use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
 use std::collections::HashMap;
+use std::ops::DerefMut;
+use std::ptr::NonNull;
 use uuid::Uuid;
 
 use crate::courier::courier_mapper::CourierRecord;
@@ -29,26 +33,56 @@ use super::courier_dto::CourierDto;
 
 pub struct CourierRepository {
     pool: Pool<ConnectionManager<PgConnection>>,
+    shared_connection: Option<NonNull<PgConnection>>,
 }
+
+// SAFETY: `shared_connection` is only accessed via `&mut self`, preventing cross-thread use.
+unsafe impl Send for CourierRepository {}
 
 impl CourierRepository {
     pub fn new(pool: Pool<ConnectionManager<PgConnection>>) -> Self {
-        Self { pool }
+        Self {
+            pool,
+            shared_connection: None,
+        }
+    }
+
+    pub fn with_shared_connection(
+        pool: Pool<ConnectionManager<PgConnection>>,
+        connection: NonNull<PgConnection>,
+    ) -> Self {
+        Self {
+            pool,
+            shared_connection: Some(connection),
+        }
+    }
+
+    fn connection(&mut self) -> Result<RepositoryConn<'_>, RepositoryError> {
+        if let Some(conn_ptr) = self.shared_connection {
+            // SAFETY: conn_ptr originates from a live transaction connection and
+            // is only accessed synchronously within the transaction scope.
+            let conn = unsafe { &mut *conn_ptr.as_ptr() };
+            return Ok(RepositoryConn::Borrowed(conn));
+        }
+
+        let conn = self
+            .pool
+            .get()
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
+        Ok(RepositoryConn::Pooled(conn))
     }
 }
 
 impl CourierRepositoryPort for CourierRepository {
     fn add(&mut self, c: Courier) -> Result<(), RepositoryError> {
         let dto: CourierDto = c.into();
-        let mut connection = self
-            .pool
-            .get()
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+        let mut connection = self.connection()?;
 
         insert_into(couriers)
             .values(&dto)
-            .execute(&mut connection)
+            .execute(connection.as_mut())
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
         Ok(())
@@ -56,31 +90,23 @@ impl CourierRepositoryPort for CourierRepository {
 
     fn update(&mut self, c: Courier) -> Result<(), RepositoryError> {
         let dto: CourierDto = c.into();
-        let mut connection = self
-            .pool
-            .get()
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+        let mut connection = self.connection()?;
 
         update(couriers.find(dto.id))
             .set(&dto)
-            .execute(&mut connection)
+            .execute(connection.as_mut())
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
         Ok(())
     }
 
     fn get_by_id(&mut self, c_id: CourierId) -> Result<Courier, RepositoryError> {
-        let mut connection = self
-            .pool
-            .get()
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+        let mut connection = self.connection()?;
 
         let results: Vec<(CourierDto, StoragePlaceDto)> = couriers
             .inner_join(storage_places)
             .filter(id.eq(c_id.0))
-            .load(&mut connection)
+            .load(connection.as_mut())
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
@@ -104,16 +130,12 @@ impl CourierRepositoryPort for CourierRepository {
     }
 
     fn get_all_free(&mut self) -> Result<Vec<Courier>, RepositoryError> {
-        let mut connection = self
-            .pool
-            .get()
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+        let mut connection = self.connection()?;
 
         let rows: Vec<(CourierDto, StoragePlaceDto)> = couriers
             .inner_join(storage_places)
             .filter(order_id.is_null())
-            .load(&mut connection)
+            .load(connection.as_mut())
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
@@ -138,15 +160,11 @@ impl CourierRepositoryPort for CourierRepository {
     }
 
     fn get_all_couriers(&mut self) -> Result<Vec<GetAllCouriersResponse>, RepositoryError> {
-        let mut connection = self
-            .pool
-            .get()
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+        let mut connection = self.connection()?;
 
         let rows = table
             .select((id, name, location_x, location_y))
-            .load::<(Uuid, String, i16, i16)>(&mut connection)
+            .load::<(Uuid, String, i16, i16)>(connection.as_mut())
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
 
@@ -170,5 +188,19 @@ impl CourierRepositoryPort for CourierRepository {
             .collect();
 
         Ok(result)
+    }
+}
+
+enum RepositoryConn<'a> {
+    Borrowed(&'a mut PgConnection),
+    Pooled(PooledConnection<ConnectionManager<PgConnection>>),
+}
+
+impl<'a> RepositoryConn<'a> {
+    fn as_mut(&mut self) -> &mut PgConnection {
+        match self {
+            RepositoryConn::Borrowed(conn) => conn,
+            RepositoryConn::Pooled(conn) => conn.deref_mut(),
+        }
     }
 }

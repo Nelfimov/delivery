@@ -98,9 +98,9 @@ where
 
 pub struct AppState<CR, OR, UOW>
 where
-    CR: CourierRepositoryPort + Send + Sync + 'static,
-    OR: OrderRepositoryPort + Send + Sync + 'static,
-    UOW: UnitOfWorkPort + Send + Sync + 'static,
+    CR: CourierRepositoryPort + Send + 'static,
+    OR: OrderRepositoryPort + Send + 'static,
+    UOW: UnitOfWorkPort + Send + 'static,
 {
     courier_repo: Shared<CR>,
     order_repo: Shared<OR>,
@@ -109,9 +109,9 @@ where
 
 impl<CR, OR, UOW> AppState<CR, OR, UOW>
 where
-    CR: CourierRepositoryPort + Send + Sync + 'static,
-    OR: OrderRepositoryPort + Send + Sync + 'static,
-    UOW: UnitOfWorkPort + Send + Sync + 'static,
+    CR: CourierRepositoryPort + Send + 'static,
+    OR: OrderRepositoryPort + Send + 'static,
+    UOW: UnitOfWorkPort + Send + 'static,
 {
     pub fn new(courier_repo: CR, order_repo: OR, uow: UOW) -> Self {
         Self {
