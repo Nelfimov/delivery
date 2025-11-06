@@ -10,7 +10,7 @@ use testcontainers_modules::postgres::Postgres;
 
 pub struct TestPg {
     pub connections: Pool<ConnectionManager<PgConnection>>,
-    pub container: ContainerAsync<Postgres>,
+    pub _container: ContainerAsync<Postgres>,
 }
 
 impl TestPg {
@@ -60,7 +60,7 @@ impl TestPg {
 
         Self {
             connections,
-            container,
+            _container: container,
         }
     }
 }

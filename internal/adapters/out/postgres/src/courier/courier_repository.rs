@@ -3,14 +3,21 @@ use diesel::prelude::*;
 use diesel::update;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
+use domain::model::courier::courier_aggregate::CourierName;
+use domain::model::kernel::location::Location;
 use ports::courier_repository_port::CourierRepositoryPort;
+use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
 use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::courier::courier_mapper::CourierRecord;
 use crate::courier::courier_schema::couriers::dsl::id;
+use crate::courier::courier_schema::couriers::dsl::location_x;
+use crate::courier::courier_schema::couriers::dsl::location_y;
+use crate::courier::courier_schema::couriers::dsl::name;
 use crate::courier::courier_schema::couriers::dsl::*;
+use crate::courier::courier_schema::couriers::table;
 use crate::errors::postgres_error::PostgresError;
 use crate::storage_place::storage_place_dto::StoragePlaceDto;
 use crate::storage_place::storage_place_schema::storage_places::dsl::*;
@@ -103,5 +110,34 @@ impl<'a> CourierRepositoryPort for CourierRepository<'a> {
                     .map_err(RepositoryError::from)
             })
             .collect()
+    }
+
+    fn get_all_couriers(&mut self) -> Result<Vec<GetAllCouriersResponse>, RepositoryError> {
+        let rows = table
+            .select((id, name, location_x, location_y))
+            .load::<(Uuid, String, i16, i16)>(self.connection)
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
+        let result: Vec<GetAllCouriersResponse> = rows
+            .iter()
+            .filter_map(|v| {
+                let location = Location::new(v.2 as u8, v.3 as u8);
+
+                match location {
+                    Ok(l) => Some(GetAllCouriersResponse {
+                        id: CourierId(v.0),
+                        name: CourierName(v.1.clone()),
+                        location: l,
+                    }),
+                    Err(e) => {
+                        println!("{}", e);
+                        None
+                    }
+                }
+            })
+            .collect();
+
+        Ok(result)
     }
 }

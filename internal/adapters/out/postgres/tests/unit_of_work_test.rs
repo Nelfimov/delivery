@@ -5,6 +5,7 @@ use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierName;
 use domain::model::courier::courier_aggregate::CourierSpeed;
 use domain::model::kernel::location::Location;
+use domain::model::kernel::volume::Volume;
 use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
 use out_postgres::courier::courier_dto::CourierDto;
@@ -26,7 +27,7 @@ async fn test_transaction_commit_and_rollback() {
 
     let TestPg {
         connections,
-        container: _,
+        _container,
     } = test_pg;
 
     let main_connection = &mut connections.get().unwrap();
@@ -95,7 +96,7 @@ async fn test_transaction_commit_and_rollback() {
         let order = Order::new(
             OrderId::new(Uuid::new_v4()),
             Location::new(2, 2).unwrap(),
-            3,
+            Volume::new(3).unwrap(),
         )
         .unwrap();
 

@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
   "internal/adapters/out/postgres",
+  "internal/core/application",
   "internal/core/domain",
   "internal/core/ports",
 ]

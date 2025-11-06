@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use super::order_schema::orders;
 
-#[derive(Queryable, Selectable, Identifiable, Insertable, AsChangeset)]
+#[derive(Queryable, Selectable, Identifiable, Insertable, AsChangeset, QueryableByName)]
 #[diesel(table_name = orders)]
 #[diesel(treat_none_as_default_value = false)]
 #[diesel(check_for_backend(Pg))]

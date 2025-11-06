@@ -9,4 +9,5 @@ pub trait OrderRepositoryPort {
     fn get_by_id(&mut self, id: OrderId) -> Result<Order, RepositoryError>;
     fn get_any_new(&mut self) -> Result<Order, RepositoryError>;
     fn get_all_assigned(&mut self) -> Result<Vec<Order>, RepositoryError>;
+    fn raw(&mut self, query: String) -> Result<Vec<Order>, RepositoryError>;
 }

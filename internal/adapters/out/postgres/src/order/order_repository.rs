@@ -1,6 +1,7 @@
 use diesel::PgConnection;
 use diesel::insert_into;
 use diesel::prelude::*;
+use diesel::sql_query;
 use diesel::update;
 use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
@@ -82,5 +83,16 @@ impl<'a> OrderRepositoryPort for OrderRepository<'a> {
             .collect();
 
         result
+    }
+
+    fn raw(&mut self, query: String) -> Result<Vec<Order>, RepositoryError> {
+        let rows: Vec<OrderDto> = sql_query(query)
+            .load(self.connection)
+            .map_err(PostgresError::from)
+            .map_err(RepositoryError::from)?;
+
+        rows.into_iter()
+            .map(|dto| dto.try_into().map_err(RepositoryError::MapError))
+            .collect()
     }
 }

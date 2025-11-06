@@ -6,7 +6,7 @@ use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
 use std::fmt::Display;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum OrderStatus {
     Created,
     Assigned,
@@ -70,9 +70,7 @@ impl PartialEq for Order {
 impl Eq for Order {}
 
 impl Order {
-    pub fn new(id: OrderId, location: Location, volume: u16) -> Result<Self, DomainModelError> {
-        let volume = Volume::new(volume)?;
-
+    pub fn new(id: OrderId, location: Location, volume: Volume) -> Result<Self, DomainModelError> {
         Ok(Self {
             id,
             location,
@@ -104,8 +102,16 @@ impl Order {
                 "courier_id".to_string(),
             ));
         }
-        self.courier_id = Some(*courier_id);
-        Ok(())
+        match self.status {
+            OrderStatus::Assigned | OrderStatus::Completed => Err(
+                DomainModelError::UnmetRequirement(format!("status is already {}", self.status)),
+            ),
+            OrderStatus::Created => {
+                self.courier_id = Some(*courier_id);
+                self.status = OrderStatus::Assigned;
+                Ok(())
+            }
+        }
     }
 
     pub fn complete(&mut self) -> Result<(), DomainModelError> {
