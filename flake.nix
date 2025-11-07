@@ -26,6 +26,7 @@
             pkgs.postgresql
             pkgs.diesel-cli
             pkgs.openapi-generator-cli
+            pkgs.protobuf
           ];
 
           shellHook = ''

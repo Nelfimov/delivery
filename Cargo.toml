@@ -8,6 +8,7 @@ members = [
   "internal/generated/servers",
   "internal/adapters/in/http",
   "entrypoint",
+  "internal/adapters/out/grpc/geo",
 ]
 
 [workspace.dependencies]
@@ -31,3 +32,7 @@ serde = { version = "1.0", features = ["derive"] }
 envy = { version = "0.4" }
 r2d2 = { version = "0.8" }
 tokio-cron-scheduler = "0.15"
+tonic = "0.14"
+prost = "0.14"
+tonic-prost-build = "0.14"
+tonic-prost = "0.14"

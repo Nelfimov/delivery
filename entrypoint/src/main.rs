@@ -3,6 +3,7 @@ mod cron;
 
 use in_http::server::start_server;
 use in_http::state::AppState;
+use out_grpc_geo::client::connect_geo;
 use out_postgres::connection::PgConnectionOptions;
 use out_postgres::connection::establish_connection;
 use out_postgres::courier::courier_repository::CourierRepository;
@@ -25,6 +26,18 @@ async fn main() {
         config.server_address,
         config.server_port
     );
+
+    tracing::event!(
+        tracing::Level::INFO,
+        "Connecting to geo: {}:{}",
+        config.geo_address,
+        config.geo_port
+    );
+    let geo_client = connect_geo(format!("{}:{}", config.geo_address, config.geo_port))
+        .await
+        .expect("could not connect to geo service");
+    tracing::event!(tracing::Level::INFO, "Succesfull connect to geo");
+
     let pool = establish_connection(PgConnectionOptions::new(
         config.db_host.clone(),
         config.db_port,

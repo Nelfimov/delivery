@@ -14,3 +14,4 @@ tracing-subscriber = { workspace = true }
 tracing = { workspace = true }
 tokio-cron-scheduler = { workspace = true }
 application = { path = "../internal/core/application" }
+out_grpc_geo = { path = "../internal/adapters/out/grpc/geo" }
