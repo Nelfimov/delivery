@@ -24,6 +24,7 @@ pub struct Config {
     pub db_port: u16,
     pub db_user: String,
     pub db_password: String,
+    pub db_name: String,
     #[serde(default = "default_server_address")]
     pub server_address: String,
     #[serde(default = "default_server_port")]

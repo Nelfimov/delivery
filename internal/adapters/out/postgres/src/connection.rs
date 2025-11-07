@@ -7,15 +7,17 @@ pub struct PgConnectionOptions {
     port: u16,
     user: String,
     password: String,
+    database: String,
 }
 
 impl PgConnectionOptions {
-    pub fn new(host: String, port: u16, user: String, password: String) -> Self {
+    pub fn new(host: String, port: u16, user: String, password: String, database: String) -> Self {
         Self {
             host,
             port,
             user,
             password,
+            database,
         }
     }
 
@@ -31,15 +33,19 @@ impl PgConnectionOptions {
     pub fn password(&self) -> String {
         self.password.clone()
     }
+    pub fn database(&self) -> String {
+        self.database.clone()
+    }
 }
 
 pub fn establish_connection(opt: PgConnectionOptions) -> Pool<ConnectionManager<PgConnection>> {
     let url = format!(
-        "postgresql://{}:{}@{}:{}",
+        "postgresql://{}:{}@{}:{}/{}",
         opt.user(),
         opt.password(),
         opt.host(),
-        opt.port()
+        opt.port(),
+        opt.database(),
     );
 
     let manager = ConnectionManager::<PgConnection>::new(url);

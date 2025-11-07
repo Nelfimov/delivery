@@ -27,12 +27,6 @@ async fn main() {
         config.server_port
     );
 
-    tracing::event!(
-        tracing::Level::INFO,
-        "Connecting to geo: {}:{}",
-        config.geo_address,
-        config.geo_port
-    );
     let geo_client = connect_geo(format!("{}:{}", config.geo_address, config.geo_port))
         .await
         .expect("could not connect to geo service");
@@ -43,6 +37,7 @@ async fn main() {
         config.db_port,
         config.db_user.clone(),
         config.db_password.clone(),
+        config.db_name.clone(),
     ));
 
     let courier_repo = CourierRepository::new(pool.clone());
