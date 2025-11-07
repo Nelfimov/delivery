@@ -13,6 +13,7 @@ members = [
 
 [workspace.dependencies]
 diesel = { version = "2.3.3", features = ["r2d2", "postgres", "uuid"] }
+diesel_migrations = { version = "2.3.0", features = ["postgres"] }
 uuid = { version = "1.18.1", features = ["v4", "serde"] }
 testcontainers = { version = "0.25", features = ["blocking"] }
 testcontainers-modules = { version = "0.13", features = ["postgres"] }

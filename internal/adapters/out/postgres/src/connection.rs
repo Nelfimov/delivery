@@ -2,6 +2,8 @@ use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
 
+use crate::migrations::run_migrations;
+
 pub struct PgConnectionOptions {
     host: String,
     port: u16,
@@ -49,8 +51,14 @@ pub fn establish_connection(opt: PgConnectionOptions) -> Pool<ConnectionManager<
     );
 
     let manager = ConnectionManager::<PgConnection>::new(url);
-    Pool::builder()
+    let pool = Pool::builder()
         .test_on_check_out(true)
         .build(manager)
-        .expect("Could not build connection pool")
+        .expect("Could not build connection pool");
+
+    let migrate_conn = pool
+        .get()
+        .expect("could not get connection for migration apply");
+    run_migrations(migrate_conn);
+    pool
 }

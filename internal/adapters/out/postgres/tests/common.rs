@@ -1,5 +1,4 @@
 use diesel::pg::PgConnection;
-use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
 use out_postgres::connection::PgConnectionOptions;
@@ -26,37 +25,8 @@ impl TestPg {
             port,
             "postgres".into(),
             "postgres".into(),
+            "postgres".into(),
         ));
-
-        println!("Connection string {}:{}", host, port);
-
-        diesel::sql_query(
-            r#"
-            CREATE TABLE couriers (
-                id UUID PRIMARY KEY,
-                name TEXT NOT NULL,
-                speed SMALLINT NOT NULL,
-                location_x SMALLINT NOT NULL,
-                location_y SMALLINT NOT NULL
-            );
-            "#,
-        )
-        .execute(&mut connections.get().unwrap())
-        .expect("create couriers table failed");
-        diesel::sql_query(
-            r#"
-            CREATE TABLE orders (
-                id UUID PRIMARY KEY,
-                courier_id UUID,
-                location_x SMALLINT NOT NULL,
-                location_y SMALLINT NOT NULL,
-                volume SMALLINT NOT NULL,
-                status TEXT NOT NULL
-            );
-            "#,
-        )
-        .execute(&mut connections.get().unwrap())
-        .expect("create orders table failed");
 
         Self {
             connections,
