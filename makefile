@@ -16,7 +16,7 @@ test: ## Run tests
 	go test ./...
 
 generate-server:
-	@go tool oapi-codegen -config configs/server.cfg.yaml https://gitlab.com/microarch-ru/ddd-in-practice/system-design/-/raw/main/services/delivery/contracts/openapi.yml
+	@openapi-generator-cli generate -g rust-axum -i https://gitlab.com/microarch-ru/ddd-in-practice/system-design/-/raw/main/services/delivery/contracts/openapi.yml -c configs/server.cfg.yaml -o internal/generated/servers
 
 generate-geo-client:
 	@rm -rf internal/generated/clients/geosrv

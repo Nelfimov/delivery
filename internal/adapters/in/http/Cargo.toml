@@ -1,0 +1,16 @@
+[package]
+name = "in_http"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { workspace = true }
+application = { path = "../../../core/application/" }
+tokio = { workspace = true }
+openapi = { path = "../../../generated/servers/" }
+ports = { path = "../../../core/ports/" }
+domain = { path = "../../../core/domain/" }
+tower-http = { workspace = true }
+async-trait = { workspace = true }
+axum-extra = { workspace = true }
+uuid = { workspace = true }

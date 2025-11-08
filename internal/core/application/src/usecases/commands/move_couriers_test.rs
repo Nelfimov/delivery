@@ -190,13 +190,13 @@ struct TestUnitOfWorkTx {
 }
 
 impl UnitOfWorkPort for TestUnitOfWork {
-    type Uow<'tx> = TestUnitOfWorkTx;
-    type CourierRepo<'tx> = TestCourierRepository;
-    type OrderRepo<'tx> = TestOrderRepository;
+    type Uow = TestUnitOfWorkTx;
+    type CourierRepo = TestCourierRepository;
+    type OrderRepo = TestOrderRepository;
 
     fn transaction<F, T>(&mut self, f: F) -> Result<T, RepositoryError>
     where
-        F: for<'tx> FnOnce(&mut Self::Uow<'tx>) -> Result<T, RepositoryError>,
+        F: for<'tx> FnOnce(&mut Self::Uow) -> Result<T, RepositoryError>,
     {
         let mut tx = TestUnitOfWorkTx {
             orders: Rc::clone(&self.orders),
@@ -205,13 +205,13 @@ impl UnitOfWorkPort for TestUnitOfWork {
         f(&mut tx)
     }
 
-    fn courier_repo(&mut self) -> Self::CourierRepo<'_> {
+    fn courier_repo(&mut self) -> Self::CourierRepo {
         TestCourierRepository {
             couriers: Rc::clone(&self.couriers),
         }
     }
 
-    fn order_repo(&mut self) -> Self::OrderRepo<'_> {
+    fn order_repo(&mut self) -> Self::OrderRepo {
         TestOrderRepository {
             orders: Rc::clone(&self.orders),
         }
@@ -219,24 +219,24 @@ impl UnitOfWorkPort for TestUnitOfWork {
 }
 
 impl UnitOfWorkPort for TestUnitOfWorkTx {
-    type Uow<'tx> = TestUnitOfWorkTx;
-    type CourierRepo<'tx> = TestCourierRepository;
-    type OrderRepo<'tx> = TestOrderRepository;
+    type Uow = TestUnitOfWorkTx;
+    type CourierRepo = TestCourierRepository;
+    type OrderRepo = TestOrderRepository;
 
     fn transaction<F, T>(&mut self, f: F) -> Result<T, RepositoryError>
     where
-        F: for<'tx> FnOnce(&mut Self::Uow<'tx>) -> Result<T, RepositoryError>,
+        F: for<'tx> FnOnce(&mut Self::Uow) -> Result<T, RepositoryError>,
     {
         f(self)
     }
 
-    fn courier_repo(&mut self) -> Self::CourierRepo<'_> {
+    fn courier_repo(&mut self) -> Self::CourierRepo {
         TestCourierRepository {
             couriers: Rc::clone(&self.couriers),
         }
     }
 
-    fn order_repo(&mut self) -> Self::OrderRepo<'_> {
+    fn order_repo(&mut self) -> Self::OrderRepo {
         TestOrderRepository {
             orders: Rc::clone(&self.orders),
         }

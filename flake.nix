@@ -24,11 +24,15 @@
             pkgs.clippy
             pkgs.go
             pkgs.postgresql
+            pkgs.diesel-cli
+            pkgs.openapi-generator-cli
           ];
 
           shellHook = ''
             if test -f ".env"; then
+              set -a
               source .env
+              set +a
             fi
           '';
         };
