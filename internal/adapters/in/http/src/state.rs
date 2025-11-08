@@ -8,6 +8,7 @@ use domain::model::order::order_aggregate::OrderId;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
+use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
 
@@ -96,28 +97,32 @@ where
     }
 }
 
-pub struct AppState<CR, OR, UOW>
+pub struct AppState<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Send + 'static,
 {
     courier_repo: Shared<CR>,
     order_repo: Shared<OR>,
     uow: Arc<Mutex<UOW>>,
+    geo_service: Shared<GS>,
 }
 
-impl<CR, OR, UOW> AppState<CR, OR, UOW>
+impl<CR, OR, UOW, GS> AppState<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Send + 'static,
 {
-    pub fn new(courier_repo: CR, order_repo: OR, uow: UOW) -> Self {
+    pub fn new(courier_repo: CR, order_repo: OR, uow: UOW, geo_service: GS) -> Self {
         Self {
             courier_repo: Shared::new(courier_repo),
             order_repo: Shared::new(order_repo),
             uow: Arc::new(Mutex::new(uow)),
+            geo_service: Shared::new(geo_service),
         }
     }
 
@@ -131,5 +136,9 @@ where
 
     pub fn unit_of_work(&self) -> Arc<Mutex<UOW>> {
         Arc::clone(&self.uow)
+    }
+
+    pub fn geo_service(&self) -> Shared<GS> {
+        self.geo_service.clone()
     }
 }

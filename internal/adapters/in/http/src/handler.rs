@@ -23,6 +23,7 @@ use openapi::apis::default::GetCouriersResponse;
 use openapi::apis::default::GetOrdersResponse;
 use openapi::models;
 use ports::courier_repository_port::CourierRepositoryPort;
+use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
 use std::fmt::Debug;
@@ -31,47 +32,51 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-pub struct ServerImpl<CR, OR, UOW>
+pub struct ServerImpl<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Send + 'static,
 {
-    state: Arc<AppState<CR, OR, UOW>>,
+    state: Arc<AppState<CR, OR, UOW, GS>>,
 }
 
-impl<CR, OR, UOW> ServerImpl<CR, OR, UOW>
+impl<CR, OR, UOW, GS> ServerImpl<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Send + 'static,
 {
-    pub fn new(state: Arc<AppState<CR, OR, UOW>>) -> Self {
+    pub fn new(state: Arc<AppState<CR, OR, UOW, GS>>) -> Self {
         Self { state }
     }
 
-    fn state(&self) -> &AppState<CR, OR, UOW> {
+    fn state(&self) -> &AppState<CR, OR, UOW, GS> {
         self.state.as_ref()
     }
 }
 
 #[async_trait]
-impl<CR, OR, UOW, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW>
+impl<CR, OR, UOW, GS, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Send + 'static,
     E: Send + Sync + Debug + 'static,
 {
 }
 
 #[allow(unused_variables)]
 #[async_trait]
-impl<CR, OR, UOW, E> DefaultApi<E> for ServerImpl<CR, OR, UOW>
+impl<CR, OR, UOW, GS, E> DefaultApi<E> for ServerImpl<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Send + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(
