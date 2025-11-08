@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use domain::model::kernel::location::Location;
 use ports::errors::GeoClientError;
 use ports::geo_service_port::GeoServicePort;
@@ -7,10 +8,10 @@ use crate::api::GetGeolocationRequest;
 use crate::api::geo_client::GeoClient;
 use crate::errors::GeoClientGrpcError;
 
+#[derive(Clone)]
 pub struct GeoService {
     client: GeoClient<Channel>,
 }
-
 impl GeoService {
     pub async fn new(address: String) -> Result<Self, GeoClientError> {
         let client = GeoClient::connect(address)
@@ -22,6 +23,7 @@ impl GeoService {
     }
 }
 
+#[async_trait]
 impl GeoServicePort for GeoService {
     async fn get_location(&mut self, address: String) -> Result<Location, GeoClientError> {
         let result = self

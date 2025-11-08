@@ -37,7 +37,7 @@ where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
-    GS: GeoServicePort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
 {
     state: Arc<AppState<CR, OR, UOW, GS>>,
 }
@@ -47,7 +47,7 @@ where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
-    GS: GeoServicePort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
 {
     pub fn new(state: Arc<AppState<CR, OR, UOW, GS>>) -> Self {
         Self { state }
@@ -64,7 +64,7 @@ where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
-    GS: GeoServicePort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
     E: Send + Sync + Debug + 'static,
 {
 }
@@ -76,7 +76,7 @@ where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
-    GS: GeoServicePort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(

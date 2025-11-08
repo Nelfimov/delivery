@@ -38,7 +38,7 @@ where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
-    GS: GeoServicePort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
 {
     let shared_state = Arc::new(state);
     let handler = Arc::new(ServerImpl::new(shared_state));

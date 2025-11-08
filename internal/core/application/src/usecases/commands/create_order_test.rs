@@ -3,6 +3,7 @@ use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
 use ports::errors::GeoClientError;
 use ports::errors::RepositoryError;
+use async_trait::async_trait;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use std::sync::Arc;
@@ -67,8 +68,10 @@ impl OrderRepositoryPort for MockOrderRepository {
     }
 }
 
+#[derive(Clone, Copy)]
 struct GeoServiceMock;
 
+#[async_trait]
 impl GeoServicePort for GeoServiceMock {
     async fn get_location(&mut self, _address: String) -> Result<Location, GeoClientError> {
         Ok(Location::new(1, 1)
