@@ -1679,6 +1679,8 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 name = "out_grpc_geo"
 version = "0.1.0"
 dependencies = [
+ "domain",
+ "ports",
  "prost",
  "tonic",
  "tonic-prost",
@@ -1883,6 +1885,7 @@ name = "ports"
 version = "0.1.0"
 dependencies = [
  "domain",
+ "trait-variant",
 ]
 
 [[package]]
@@ -3070,6 +3073,17 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "trait-variant"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70977707304198400eb4835a78f6a9f928bf41bba420deb8fdb175cd965d77a7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
 ]
 
 [[package]]
