@@ -27,7 +27,10 @@ where
 {
     type Error = QueryError;
 
-    fn execute(&mut self, _: GetAllCouriers) -> Result<Vec<GetAllCouriersResponse>, Self::Error> {
+    async fn execute(
+        &mut self,
+        _: GetAllCouriers,
+    ) -> Result<Vec<GetAllCouriersResponse>, Self::Error> {
         Ok(self.courier_repository.get_all_couriers()?)
     }
 }

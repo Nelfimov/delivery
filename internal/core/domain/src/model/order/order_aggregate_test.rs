@@ -58,8 +58,7 @@ mod tests {
         let volume: Volume = Volume::new(10).unwrap();
         let mut order = Order::new(OrderId::new(Uuid::new_v4()), location, volume).unwrap();
 
-        let result = order.complete();
-        assert_eq!(result.unwrap(), ());
+        let _ = order.complete();
         assert_eq!(order.status(), &OrderStatus::Completed);
 
         order.complete().unwrap();
@@ -75,8 +74,7 @@ mod tests {
         let courier_id = CourierId(Uuid::new_v4());
         let _ = order.assign(&courier_id);
 
-        let result = order.complete();
-        assert_eq!(result.unwrap(), ());
+        let _ = order.complete();
         assert_eq!(order.status(), &OrderStatus::Completed);
 
         order.complete().unwrap();

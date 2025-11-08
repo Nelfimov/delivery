@@ -28,7 +28,7 @@ where
 {
     type Error = CommandError;
 
-    fn execute(&mut self, command: CreateCourierCommand) -> Result<(), Self::Error> {
+    async fn execute(&mut self, command: CreateCourierCommand) -> Result<(), Self::Error> {
         let courier = Courier::new(
             command.name().to_owned(),
             command.speed().to_owned(),

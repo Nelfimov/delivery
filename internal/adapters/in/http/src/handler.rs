@@ -100,7 +100,7 @@ where
                 }
             };
 
-        match handler.execute(command) {
+        match handler.execute(command).await {
             Ok(_) => Ok(CreateCourierResponse::Status201),
             Err(err) => {
                 let code = match &err {
@@ -123,7 +123,8 @@ where
         cookies: &CookieJar,
     ) -> Result<CreateOrderResponse, E> {
         let repo = self.state().order_repo();
-        let mut handler = CreateOrderHandler::new(repo);
+        let geo_service = self.state().geo_service();
+        let mut handler = CreateOrderHandler::new(repo, geo_service);
 
         let command = match CreateOrderCommand::new(Uuid::new_v4(), "Unknown street".into(), 5) {
             Ok(cmd) => cmd,
@@ -135,7 +136,7 @@ where
             }
         };
 
-        match handler.execute(command) {
+        match handler.execute(command).await {
             Ok(_) => Ok(CreateOrderResponse::Status201),
             Err(err) => {
                 let code = match &err {
@@ -162,7 +163,7 @@ where
 
         let command = GetAllCouriers;
 
-        match handler.execute(command) {
+        match handler.execute(command).await {
             Ok(couriers) => Ok(GetCouriersResponse::Status200(
                 couriers
                     .iter()
@@ -199,7 +200,7 @@ where
         let repo = self.state().order_repo();
         let mut handler = GetAllIncompleteOrdersHandler::new(repo);
 
-        match handler.execute(GetAllIncompleteOrders) {
+        match handler.execute(GetAllIncompleteOrders).await {
             Ok(orders) => {
                 let orders = orders
                     .into_iter()

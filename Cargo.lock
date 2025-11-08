@@ -45,6 +45,8 @@ version = "0.1.0"
 dependencies = [
  "domain",
  "ports",
+ "tokio",
+ "trait-variant",
  "uuid",
 ]
 
@@ -1884,6 +1886,7 @@ checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
 name = "ports"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "domain",
  "trait-variant",
 ]

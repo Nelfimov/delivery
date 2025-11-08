@@ -256,8 +256,8 @@ fn initial_state() -> (Vec<StoredOrder>, Vec<Courier>) {
     )
 }
 
-#[test]
-fn handle_assigns_order() {
+#[tokio::test]
+async fn handle_assigns_order() {
     let (orders, couriers) = initial_state();
     let orders_state = Rc::new(RefCell::new(orders));
     let couriers_state = Rc::new(RefCell::new(couriers));
@@ -270,6 +270,7 @@ fn handle_assigns_order() {
 
     handler
         .execute(command)
+        .await
         .expect("handler should finish successfully");
 
     let orders = orders_state.borrow();

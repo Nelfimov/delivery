@@ -31,7 +31,7 @@ where
 {
     type Error = CommandError;
 
-    fn execute(&mut self, _: AssignOrderCommand) -> Result<(), Self::Error> {
+    async fn execute(&mut self, _: AssignOrderCommand) -> Result<(), Self::Error> {
         self.uow
             .transaction(|tx| {
                 let unassigned_order = {
