@@ -12,6 +12,8 @@ application = { path = "../../../core/application" }
 ports = { path = "../../../core/ports" }
 domain = { path = "../../../core/domain" }
 uuid = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }

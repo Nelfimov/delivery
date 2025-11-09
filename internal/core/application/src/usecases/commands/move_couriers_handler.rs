@@ -33,7 +33,7 @@ where
 {
     type Error = CommandError;
 
-    #[instrument(skip(self))]
+    #[instrument(skip_all)]
     async fn execute(&mut self, _command: MoveCouriersCommand) -> Result<(), Self::Error> {
         self.uow
             .transaction(|tx| {
@@ -43,7 +43,7 @@ where
                 };
 
                 if assigned_orders.is_empty() {
-                    warn!("no assigned orders found");
+                    debug!("no assigned orders found");
                     return Ok(());
                 }
 

@@ -1323,6 +1323,8 @@ dependencies = [
  "prost-build",
  "prost-types",
  "rdkafka",
+ "serde",
+ "serde_json",
  "tracing",
  "uuid",
 ]

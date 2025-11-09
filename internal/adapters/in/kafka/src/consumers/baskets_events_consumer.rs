@@ -3,20 +3,20 @@ use application::usecases::commands::create_order_command::CreateOrderCommand;
 use application::usecases::commands::create_order_handler::CreateOrderHandler;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
-use prost::Message as ProstMessage;
 use rdkafka::ClientConfig;
 use rdkafka::Message;
 use rdkafka::consumer::Consumer;
 use rdkafka::consumer::StreamConsumer;
+use serde::Deserialize;
 use std::str::FromStr;
 use std::time::Duration;
 use tracing::Level;
+use tracing::debug;
 use tracing::event;
 use tracing::info;
 use tracing::span;
 use tracing::warn;
 
-use crate::messages::BasketConfirmedIntegrationEvent;
 use crate::shared::Shared;
 
 static TOPIC: [&str; 1] = ["baskets.events"];
@@ -36,12 +36,7 @@ where
     OR: OrderRepositoryPort,
     GS: GeoServicePort + Clone,
 {
-    pub fn new(
-        brokers: &str,
-        group_id: &str,
-        order_repo: Shared<OR>,
-        geo_service: GS,
-    ) -> Self {
+    pub fn new(brokers: &str, group_id: &str, order_repo: Shared<OR>, geo_service: GS) -> Self {
         let mut config = ClientConfig::new();
 
         let consumer: StreamConsumer = config
@@ -85,58 +80,64 @@ where
                             warn!("error reading kafka payload: {:?}", e);
                             continue;
                         }
-                        Some(Ok(payload)) => payload,
+                        Some(Ok(payload)) => {
+                            debug!("{:?}", payload);
+                            payload
+                        }
                     };
 
-                    match BasketConfirmedIntegrationEvent::decode(payload) {
+                    let event: BasketEventPayload = match serde_json::from_slice(payload) {
+                        Ok(event) => event,
                         Err(err) => {
-                            warn!(?err, "failed to decode BasketConfirmedIntegrationEvent");
+                            warn!(?err, "failed to parse BasketConfirmedIntegrationEvent JSON");
                             continue;
                         }
-                        Ok(event) => {
-                            info!(
-                                event_id = event.event_id,
-                                basket_id = event.basket_id,
-                                "received BasketConfirmedIntegrationEvent"
-                            );
-                            match event.address {
-                                None => {
-                                    warn!("event has no address");
-                                    continue;
-                                }
-                                Some(address) => match uuid::Uuid::from_str(&event.basket_id) {
-                                    Err(e) => {
-                                        warn!("event non uuid format: {}", e);
-                                        continue;
-                                    }
-                                    Ok(id) => {
-                                        let command = match CreateOrderCommand::new(
-                                            id,
-                                            address.street,
-                                            event.volume as u16,
-                                        ) {
-                                            Ok(c) => c,
-                                            Err(e) => {
-                                                warn!("could not create command: {}", e);
-                                                continue;
-                                            }
-                                        };
-                                        let mut handler = CreateOrderHandler::new(
-                                            self.order_repo.clone(),
-                                            self.geo_service.clone(),
-                                        );
+                    };
 
-                                        if let Err(err) = handler.execute(command).await {
-                                            warn!(
-                                                ?err,
-                                                "failed to handle BasketConfirmedIntegrationEvent"
-                                            );
-                                            continue;
-                                        }
-                                    }
-                                },
-                            }
+                    info!(
+                        event_id = event.event_id,
+                        basket_id = event.basket_id,
+                        "received BasketConfirmedIntegrationEvent"
+                    );
+
+                    let address = match event.address {
+                        Some(address) => address,
+                        None => {
+                            warn!("event has no address");
+                            continue;
                         }
+                    };
+
+                    let id = match uuid::Uuid::from_str(&event.basket_id) {
+                        Ok(id) => id,
+                        Err(err) => {
+                            warn!(?err, "event basket_id is not a valid UUID");
+                            continue;
+                        }
+                    };
+
+                    let volume = match u16::try_from(event.volume) {
+                        Ok(volume) => volume,
+                        Err(err) => {
+                            warn!(?err, "event volume is out of range for u16");
+                            continue;
+                        }
+                    };
+
+                    let command = match CreateOrderCommand::new(id, address.street, volume) {
+                        Ok(command) => command,
+                        Err(err) => {
+                            warn!(?err, "could not create command");
+                            continue;
+                        }
+                    };
+
+                    let mut handler =
+                        CreateOrderHandler::new(self.order_repo.clone(), self.geo_service.clone());
+
+                    if let Err(err) = handler.execute(command).await {
+                        warn!(?err, "failed to handle BasketConfirmedIntegrationEvent");
+                        continue;
                     }
 
                     match self
@@ -153,4 +154,49 @@ where
             }
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BasketEventPayload {
+    #[serde(default)]
+    event_id: String,
+    #[serde(default)]
+    event_type: String,
+    #[serde(default)]
+    occurred_at: Option<String>,
+    basket_id: String,
+    address: Option<AddressPayload>,
+    #[serde(default)]
+    items: Vec<ItemPayload>,
+    #[serde(default)]
+    delivery_period: Option<DeliveryPeriodPayload>,
+    volume: i32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AddressPayload {
+    country: String,
+    city: String,
+    street: String,
+    house: String,
+    apartment: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ItemPayload {
+    id: String,
+    good_id: String,
+    title: String,
+    price: f64,
+    quantity: i32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DeliveryPeriodPayload {
+    from: i32,
+    to: i32,
 }
