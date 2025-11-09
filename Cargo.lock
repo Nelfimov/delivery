@@ -1314,11 +1314,15 @@ dependencies = [
 name = "in_kafka"
 version = "0.1.0"
 dependencies = [
+ "application",
+ "domain",
+ "ports",
  "prost",
  "prost-build",
  "prost-types",
  "rdkafka",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

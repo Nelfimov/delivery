@@ -8,6 +8,10 @@ rdkafka = { workspace = true }
 tracing = { workspace = true }
 prost = { workspace = true }
 prost-types = { workspace = true }
+application = { path = "../../../core/application" }
+ports = { path = "../../../core/ports" }
+domain = { path = "../../../core/domain" }
+uuid = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }
