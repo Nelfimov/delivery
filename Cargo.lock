@@ -1314,6 +1314,9 @@ dependencies = [
 name = "in_kafka"
 version = "0.1.0"
 dependencies = [
+ "prost",
+ "prost-build",
+ "prost-types",
  "rdkafka",
  "tracing",
 ]

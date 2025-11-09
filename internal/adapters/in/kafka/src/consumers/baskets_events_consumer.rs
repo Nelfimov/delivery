@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use prost::Message as ProstMessage;
 use rdkafka::ClientConfig;
 use rdkafka::Message;
 use rdkafka::consumer::Consumer;
@@ -9,6 +10,8 @@ use tracing::event;
 use tracing::info;
 use tracing::span;
 use tracing::warn;
+
+use crate::messages::BasketConfirmedIntegrationEvent;
 
 static TOPIC: [&str; 1] = ["baskets.events"];
 
@@ -51,23 +54,39 @@ impl BasketEventsConsumer {
             match self.consumer.recv().await {
                 Err(e) => warn!("could not consume message: {}", e),
                 Ok(msg) => {
-                    let payload = match msg.payload_view() {
-                        None => "",
-                        Some(Ok(s)) => s,
+                    let payload = match msg.payload_view::<[u8]>() {
+                        None => continue,
                         Some(Err(e)) => {
-                            warn!("error deserializing message: {:?}", e);
-                            ""
+                            warn!("error reading kafka payload: {:?}", e);
+                            continue;
                         }
+                        Some(Ok(payload)) => payload,
                     };
-                    info!(
-                        "key: '{:?}', payload: '{}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
-                        msg.key(),
-                        payload,
-                        msg.topic(),
-                        msg.partition(),
-                        msg.offset(),
-                        msg.timestamp()
-                    );
+
+                    match BasketConfirmedIntegrationEvent::decode(payload) {
+                        Err(err) => {
+                            warn!(?err, "failed to decode BasketConfirmedIntegrationEvent");
+                            continue;
+                        }
+                        Ok(event) => {
+                            info!(
+                                event_id = event.event_id,
+                                basket_id = event.basket_id,
+                                "received BasketConfirmedIntegrationEvent"
+                            );
+                        }
+                    }
+
+                    match self
+                        .consumer
+                        .commit_message(&msg, rdkafka::consumer::CommitMode::Async)
+                    {
+                        Ok(_) => continue,
+                        Err(e) => {
+                            warn!("could not commit message: {:?}", e);
+                            continue;
+                        }
+                    }
                 }
             }
         }

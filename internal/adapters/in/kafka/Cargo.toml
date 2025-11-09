@@ -6,3 +6,8 @@ edition = "2024"
 [dependencies]
 rdkafka = { workspace = true }
 tracing = { workspace = true }
+prost = { workspace = true }
+prost-types = { workspace = true }
+
+[build-dependencies]
+prost-build = { workspace = true }
