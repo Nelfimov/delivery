@@ -18,6 +18,15 @@ pub struct UnitOfWork {
 // SAFETY: transaction connections never leave the transaction closure and are only accessed mutably.
 unsafe impl Send for UnitOfWork {}
 
+impl std::fmt::Debug for UnitOfWork {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UnitOfWork")
+            .field("pool", &self.pool)
+            .field("shared_connection", &self.shared_connection)
+            .finish()
+    }
+}
+
 impl UnitOfWork {
     pub fn new(pool: Pool<ConnectionManager<PgConnection>>) -> Self {
         Self {

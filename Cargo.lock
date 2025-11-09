@@ -47,6 +47,8 @@ dependencies = [
  "domain",
  "ports",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
  "trait-variant",
  "uuid",
 ]
