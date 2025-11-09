@@ -1,5 +1,6 @@
 use crate::errors::command_errors::CommandError;
 
+#[derive(Debug)]
 pub struct MoveCouriersCommand;
 
 impl MoveCouriersCommand {

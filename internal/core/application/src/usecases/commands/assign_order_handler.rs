@@ -4,6 +4,7 @@ use ports::courier_repository_port::CourierRepositoryPort;
 use ports::errors::RepositoryError;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
+use std::fmt::Debug;
 use tracing::Level;
 use tracing::instrument;
 
@@ -14,14 +15,14 @@ use crate::usecases::commands::assign_order_command::AssignOrderCommand;
 #[derive(Debug)]
 pub struct AssignOrderHandler<UOW>
 where
-    UOW: UnitOfWorkPort + std::fmt::Debug,
+    UOW: UnitOfWorkPort + Debug,
 {
     uow: UOW,
 }
 
 impl<UOW> AssignOrderHandler<UOW>
 where
-    UOW: UnitOfWorkPort + std::fmt::Debug,
+    UOW: UnitOfWorkPort + Debug,
 {
     pub fn new(uow: UOW) -> Self {
         Self { uow }
@@ -30,7 +31,7 @@ where
 
 impl<UOW> CommandHandler<AssignOrderCommand, ()> for AssignOrderHandler<UOW>
 where
-    UOW: UnitOfWorkPort + std::fmt::Debug,
+    UOW: UnitOfWorkPort + Debug,
 {
     type Error = CommandError;
 
