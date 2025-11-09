@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+#[allow(dead_code)]
 mod api {
     include!("./gen/geo.rs");
 }
