@@ -3,6 +3,7 @@ mod cron;
 
 use in_http::server::start_server;
 use in_http::state::AppState;
+use in_kafka::consumers::baskets_events_consumer::BasketEventsConsumer;
 use out_grpc_geo::geo_service::GeoService;
 use out_postgres::connection::PgConnectionOptions;
 use out_postgres::connection::establish_connection;
@@ -47,6 +48,11 @@ async fn main() {
     let app_state = AppState::new(courier_repo, order_repo, uow, geo_service);
 
     let mut scheduler = start_crons(pool.clone()).await;
+
+    let consumer = BasketEventsConsumer::new(&config.kafka_host, &config.kafka_consumer_group);
+    let _consumer_handle = tokio::spawn(async move {
+        consumer.consume().await;
+    });
 
     start_server(
         &format!("{}:{}", config.server_address, config.server_port),
