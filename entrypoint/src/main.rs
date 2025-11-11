@@ -3,7 +3,7 @@ mod cron;
 
 use in_http::server::start_server;
 use in_http::state::AppState;
-use in_kafka::consumers::baskets_events_consumer::BasketEventsConsumer;
+use in_kafka::baskets_events_consumer::BasketEventsConsumer;
 use in_kafka::shared::Shared;
 use out_grpc_geo::geo_service::GeoService;
 use out_postgres::connection::PgConnectionOptions;
