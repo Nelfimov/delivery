@@ -3,6 +3,7 @@ mod cron;
 
 use in_http::server::start_server;
 use in_http::state::AppState;
+use out_grpc_geo::geo_service::GeoService;
 use out_postgres::connection::PgConnectionOptions;
 use out_postgres::connection::establish_connection;
 use out_postgres::courier::courier_repository::CourierRepository;
@@ -25,18 +26,25 @@ async fn main() {
         config.server_address,
         config.server_port
     );
+
+    let geo_service = GeoService::new(format!("{}:{}", config.geo_address, config.geo_port))
+        .await
+        .expect("could not connect to geo service");
+    tracing::event!(tracing::Level::INFO, "Succesfull connect to geo");
+
     let pool = establish_connection(PgConnectionOptions::new(
         config.db_host.clone(),
         config.db_port,
         config.db_user.clone(),
         config.db_password.clone(),
+        config.db_name.clone(),
     ));
 
     let courier_repo = CourierRepository::new(pool.clone());
     let order_repo = OrderRepository::new(pool.clone());
     let uow = UnitOfWork::new(pool.clone());
 
-    let app_state = AppState::new(courier_repo, order_repo, uow);
+    let app_state = AppState::new(courier_repo, order_repo, uow, geo_service);
 
     let mut scheduler = start_crons(pool.clone()).await;
 

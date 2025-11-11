@@ -23,6 +23,7 @@ use openapi::apis::default::GetCouriersResponse;
 use openapi::apis::default::GetOrdersResponse;
 use openapi::models;
 use ports::courier_repository_port::CourierRepositoryPort;
+use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
 use std::fmt::Debug;
@@ -31,47 +32,51 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-pub struct ServerImpl<CR, OR, UOW>
+pub struct ServerImpl<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
 {
-    state: Arc<AppState<CR, OR, UOW>>,
+    state: Arc<AppState<CR, OR, UOW, GS>>,
 }
 
-impl<CR, OR, UOW> ServerImpl<CR, OR, UOW>
+impl<CR, OR, UOW, GS> ServerImpl<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
 {
-    pub fn new(state: Arc<AppState<CR, OR, UOW>>) -> Self {
+    pub fn new(state: Arc<AppState<CR, OR, UOW, GS>>) -> Self {
         Self { state }
     }
 
-    fn state(&self) -> &AppState<CR, OR, UOW> {
+    fn state(&self) -> &AppState<CR, OR, UOW, GS> {
         self.state.as_ref()
     }
 }
 
 #[async_trait]
-impl<CR, OR, UOW, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW>
+impl<CR, OR, UOW, GS, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
     E: Send + Sync + Debug + 'static,
 {
 }
 
 #[allow(unused_variables)]
 #[async_trait]
-impl<CR, OR, UOW, E> DefaultApi<E> for ServerImpl<CR, OR, UOW>
+impl<CR, OR, UOW, GS, E> DefaultApi<E> for ServerImpl<CR, OR, UOW, GS>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
+    GS: GeoServicePort + Clone + Send + Sync + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(
@@ -95,7 +100,7 @@ where
                 }
             };
 
-        match handler.execute(command) {
+        match handler.execute(command).await {
             Ok(_) => Ok(CreateCourierResponse::Status201),
             Err(err) => {
                 let code = match &err {
@@ -118,7 +123,8 @@ where
         cookies: &CookieJar,
     ) -> Result<CreateOrderResponse, E> {
         let repo = self.state().order_repo();
-        let mut handler = CreateOrderHandler::new(repo);
+        let geo_service = self.state().geo_service();
+        let mut handler = CreateOrderHandler::new(repo, geo_service);
 
         let command = match CreateOrderCommand::new(Uuid::new_v4(), "Unknown street".into(), 5) {
             Ok(cmd) => cmd,
@@ -130,7 +136,7 @@ where
             }
         };
 
-        match handler.execute(command) {
+        match handler.execute(command).await {
             Ok(_) => Ok(CreateOrderResponse::Status201),
             Err(err) => {
                 let code = match &err {
@@ -157,7 +163,7 @@ where
 
         let command = GetAllCouriers;
 
-        match handler.execute(command) {
+        match handler.execute(command).await {
             Ok(couriers) => Ok(GetCouriersResponse::Status200(
                 couriers
                     .iter()
@@ -194,7 +200,7 @@ where
         let repo = self.state().order_repo();
         let mut handler = GetAllIncompleteOrdersHandler::new(repo);
 
-        match handler.execute(GetAllIncompleteOrders) {
+        match handler.execute(GetAllIncompleteOrders).await {
             Ok(orders) => {
                 let orders = orders
                     .into_iter()

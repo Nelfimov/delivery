@@ -29,7 +29,7 @@ where
 {
     type Error = CommandError;
 
-    fn execute(&mut self, _command: MoveCouriersCommand) -> Result<(), Self::Error> {
+    async fn execute(&mut self, _command: MoveCouriersCommand) -> Result<(), Self::Error> {
         self.uow
             .transaction(|tx| {
                 let mut assigned_orders = {

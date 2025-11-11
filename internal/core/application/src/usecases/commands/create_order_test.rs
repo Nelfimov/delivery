@@ -1,6 +1,10 @@
+use domain::model::kernel::location::Location;
 use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
+use ports::errors::GeoClientError;
 use ports::errors::RepositoryError;
+use async_trait::async_trait;
+use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -64,17 +68,31 @@ impl OrderRepositoryPort for MockOrderRepository {
     }
 }
 
-#[test]
-fn handle_persists_order_via_repository() {
+#[derive(Clone, Copy)]
+struct GeoServiceMock;
+
+#[async_trait]
+impl GeoServicePort for GeoServiceMock {
+    async fn get_location(&mut self, _address: String) -> Result<Location, GeoClientError> {
+        Ok(Location::new(1, 1)
+            .map_err(|e| GeoClientError::ExecutionError(e.to_string()))
+            .unwrap())
+    }
+}
+
+#[tokio::test]
+async fn handle_persists_order_via_repository() {
     let stored_id = Arc::new(Mutex::new(None));
     let repo = MockOrderRepository::new(stored_id.clone());
+    let geo_service = GeoServiceMock;
 
-    let mut handler = CreateOrderHandler::new(repo);
+    let mut handler = CreateOrderHandler::new(repo, geo_service);
     let command = CreateOrderCommand::new(Uuid::new_v4(), "Tverskaya street 1".to_string(), 10)
         .expect("command should be valid");
 
     handler
         .execute(command)
+        .await
         .expect("handler should persist order");
 
     let observed = *stored_id.lock().expect("mutex poisoned");
@@ -84,15 +102,16 @@ fn handle_persists_order_via_repository() {
     );
 }
 
-#[test]
-fn handle_propagates_repository_error() {
+#[tokio::test]
+async fn handle_propagates_repository_error() {
     let stored_id = Arc::new(Mutex::new(None));
     let repo = MockOrderRepository::new_failing(stored_id);
+    let geo_service = GeoServiceMock;
 
-    let mut handler = CreateOrderHandler::new(repo);
+    let mut handler = CreateOrderHandler::new(repo, geo_service);
     let command = CreateOrderCommand::new(Uuid::new_v4(), "Nevsky prospect 10".to_string(), 5)
         .expect("command should be valid");
 
-    let result = handler.execute(command);
+    let result = handler.execute(command).await;
     assert!(result.is_err(), "handler must surface repository failures");
 }

@@ -1,8 +1,9 @@
 pub mod commands;
 pub mod queries;
 
+#[trait_variant::make(HttpService: Send)]
 pub trait CommandHandler<C, R> {
     type Error;
 
-    fn execute(&mut self, command: C) -> Result<R, Self::Error>;
+    async fn execute(&mut self, command: C) -> Result<R, Self::Error>;
 }

@@ -7,3 +7,4 @@ pub mod unit_of_work;
 pub use diesel::PgConnection;
 pub use diesel::r2d2::ConnectionManager;
 pub use diesel::r2d2::Pool;
+mod migrations;

@@ -27,7 +27,10 @@ where
 {
     type Error = QueryError;
 
-    fn execute(&mut self, _command: GetAllIncompleteOrders) -> Result<Vec<Order>, Self::Error> {
+    async fn execute(
+        &mut self,
+        _command: GetAllIncompleteOrders,
+    ) -> Result<Vec<Order>, Self::Error> {
         self.order_repository
             .raw("SELECT * FROM orders WHERE status != 'completed';".into())
             .map_err(Self::Error::from)

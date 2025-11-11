@@ -2,20 +2,24 @@ use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
 
+use crate::migrations::run_migrations;
+
 pub struct PgConnectionOptions {
     host: String,
     port: u16,
     user: String,
     password: String,
+    database: String,
 }
 
 impl PgConnectionOptions {
-    pub fn new(host: String, port: u16, user: String, password: String) -> Self {
+    pub fn new(host: String, port: u16, user: String, password: String, database: String) -> Self {
         Self {
             host,
             port,
             user,
             password,
+            database,
         }
     }
 
@@ -31,20 +35,30 @@ impl PgConnectionOptions {
     pub fn password(&self) -> String {
         self.password.clone()
     }
+    pub fn database(&self) -> String {
+        self.database.clone()
+    }
 }
 
 pub fn establish_connection(opt: PgConnectionOptions) -> Pool<ConnectionManager<PgConnection>> {
     let url = format!(
-        "postgresql://{}:{}@{}:{}",
+        "postgresql://{}:{}@{}:{}/{}",
         opt.user(),
         opt.password(),
         opt.host(),
-        opt.port()
+        opt.port(),
+        opt.database(),
     );
 
     let manager = ConnectionManager::<PgConnection>::new(url);
-    Pool::builder()
+    let pool = Pool::builder()
         .test_on_check_out(true)
         .build(manager)
-        .expect("Could not build connection pool")
+        .expect("Could not build connection pool");
+
+    let migrate_conn = pool
+        .get()
+        .expect("could not get connection for migration apply");
+    run_migrations(migrate_conn);
+    pool
 }

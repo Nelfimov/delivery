@@ -1,0 +1,15 @@
+[package]
+name = "out_grpc_geo"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tonic = { workspace = true }
+prost = { workspace = true }
+tonic-prost = { workspace = true }
+ports = { path = "../../../../core/ports" }
+domain = { path = "../../../../core/domain" }
+async-trait = { workspace = true }
+
+[build-dependencies]
+tonic-prost-build = { workspace = true }

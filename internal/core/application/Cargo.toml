@@ -7,3 +7,8 @@ edition = "2024"
 domain = { path = "../domain/" }
 ports = { path = "../ports/" }
 uuid = { workspace = true }
+trait-variant = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

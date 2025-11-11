@@ -11,6 +11,7 @@ use out_postgres::ConnectionManager;
 use out_postgres::PgConnection;
 use out_postgres::Pool;
 use out_postgres::unit_of_work::UnitOfWork;
+use tokio::runtime::Handle;
 use tokio::task;
 use tokio_cron_scheduler::Job;
 use tokio_cron_scheduler::JobScheduler;
@@ -24,8 +25,11 @@ pub async fn start_crons(pool: Pool<ConnectionManager<PgConnection>>) -> JobSche
         pool.clone(),
     ))));
     let move_couriers_handler_job = Arc::clone(&move_couriers_handler);
+    let runtime_handle = Handle::current();
+    let move_job_handle = runtime_handle.clone();
     let move_couriers = Job::new_repeated_async(Duration::from_secs(1), move |_uuid, _l| {
         let handler = Arc::clone(&move_couriers_handler_job);
+        let handle = move_job_handle.clone();
         Box::pin(async move {
             let join_result = task::spawn_blocking(move || {
                 let mut handler = match handler.lock() {
@@ -41,7 +45,7 @@ pub async fn start_crons(pool: Pool<ConnectionManager<PgConnection>>) -> JobSche
 
                 match MoveCouriersCommand::new() {
                     Ok(command) => {
-                        if let Err(err) = handler.execute(command) {
+                        if let Err(err) = handle.block_on(handler.execute(command)) {
                             tracing::error!(?err, "move couriers job failed");
                         }
                     }
@@ -64,8 +68,10 @@ pub async fn start_crons(pool: Pool<ConnectionManager<PgConnection>>) -> JobSche
 
     let assign_order_handler = Arc::new(Mutex::new(AssignOrderHandler::new(UnitOfWork::new(pool))));
     let assign_order_handler_job = Arc::clone(&assign_order_handler);
+    let assign_job_handle = runtime_handle.clone();
     let assign_orders = Job::new_repeated_async(Duration::from_secs(1), move |_uuid, _l| {
         let handler = Arc::clone(&assign_order_handler_job);
+        let handle = assign_job_handle.clone();
         Box::pin(async move {
             let join_result = task::spawn_blocking(move || {
                 let mut handler = match handler.lock() {
@@ -81,7 +87,7 @@ pub async fn start_crons(pool: Pool<ConnectionManager<PgConnection>>) -> JobSche
 
                 match AssignOrderCommand::new() {
                     Ok(command) => {
-                        if let Err(err) = handler.execute(command) {
+                        if let Err(err) = handle.block_on(handler.execute(command)) {
                             tracing::error!(?err, "assign orders job failed");
                         }
                     }
