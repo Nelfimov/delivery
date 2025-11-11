@@ -44,7 +44,6 @@ where
             .set("bootstrap.servers", brokers)
             .set("enable.partition.eof", "false")
             .set("session.timeout.ms", "6000")
-            .set("enable.auto.commit", "true")
             .create()
             .expect("could not create consumer");
 
