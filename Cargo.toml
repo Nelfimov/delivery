@@ -9,6 +9,7 @@ members = [
   "internal/adapters/in/http",
   "entrypoint",
   "internal/adapters/out/grpc/geo",
+  "internal/adapters/in/kafka",
 ]
 
 [workspace.dependencies]
@@ -34,7 +35,11 @@ envy = { version = "0.4" }
 r2d2 = { version = "0.8" }
 tokio-cron-scheduler = "0.15"
 tonic = "0.14"
-prost = "0.14"
+prost = { version = "0.14", features = ["derive"] }
+prost-build = "0.14"
+prost-types = "0.14"
 tonic-prost-build = "0.14"
 tonic-prost = "0.14"
 trait-variant = "0.1"
+rdkafka = { version = "0.38.0", features = ["tracing"] }
+serde_json = { version = "1.0" }

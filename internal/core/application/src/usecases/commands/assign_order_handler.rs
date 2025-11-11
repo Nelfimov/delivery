@@ -4,21 +4,25 @@ use ports::courier_repository_port::CourierRepositoryPort;
 use ports::errors::RepositoryError;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
+use std::fmt::Debug;
+use tracing::Level;
+use tracing::instrument;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
 use crate::usecases::commands::assign_order_command::AssignOrderCommand;
 
+#[derive(Debug)]
 pub struct AssignOrderHandler<UOW>
 where
-    UOW: UnitOfWorkPort,
+    UOW: UnitOfWorkPort + Debug,
 {
     uow: UOW,
 }
 
 impl<UOW> AssignOrderHandler<UOW>
 where
-    UOW: UnitOfWorkPort,
+    UOW: UnitOfWorkPort + Debug,
 {
     pub fn new(uow: UOW) -> Self {
         Self { uow }
@@ -27,10 +31,11 @@ where
 
 impl<UOW> CommandHandler<AssignOrderCommand, ()> for AssignOrderHandler<UOW>
 where
-    UOW: UnitOfWorkPort,
+    UOW: UnitOfWorkPort + Debug,
 {
     type Error = CommandError;
 
+    #[instrument(skip(self))]
     async fn execute(&mut self, _: AssignOrderCommand) -> Result<(), Self::Error> {
         self.uow
             .transaction(|tx| {
@@ -42,10 +47,17 @@ where
 
                 match unassigned_order {
                     None => {
-                        println!("No unassigned order found");
+                        tracing::event!(Level::DEBUG, "no unassigned order found");
                         Ok(())
                     }
                     Some(mut order) => {
+                        let span_child = tracing::span!(
+                            tracing::Level::TRACE,
+                            "handler",
+                            id = order.id().0.to_string()
+                        );
+                        let _enter_child = span_child.enter();
+
                         let mut available_couriers = {
                             let mut repo = tx.courier_repo();
                             repo.get_all_free()?
@@ -56,6 +68,8 @@ where
                                 .map_err(|e| RepositoryError::from(e.to_string()))?;
                         tx.courier_repo().update(courier.to_owned())?;
                         tx.order_repo().update(&order)?;
+
+                        tracing::event!(tracing::Level::INFO, "succesfully assigned order",);
                         Ok(())
                     }
                 }

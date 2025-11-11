@@ -175,6 +175,15 @@ struct TestUnitOfWork {
     couriers: Rc<RefCell<Vec<Courier>>>,
 }
 
+impl std::fmt::Debug for TestUnitOfWork {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TestUnitOfWork")
+            .field("orders", &self.orders)
+            .field("couriers", &self.couriers)
+            .finish()
+    }
+}
+
 impl TestUnitOfWork {
     fn from_state(
         orders: Rc<RefCell<Vec<StoredOrder>>>,
