@@ -7,7 +7,6 @@ use rdkafka::ClientConfig;
 use rdkafka::Message;
 use rdkafka::consumer::Consumer;
 use rdkafka::consumer::StreamConsumer;
-use serde::Deserialize;
 use std::str::FromStr;
 use std::time::Duration;
 use tracing::Level;
@@ -17,6 +16,7 @@ use tracing::info;
 use tracing::span;
 use tracing::warn;
 
+use crate::mapper::BasketEventPayload;
 use crate::shared::Shared;
 
 static TOPIC: [&str; 1] = ["baskets.events"];
@@ -154,49 +154,4 @@ where
             }
         }
     }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct BasketEventPayload {
-    #[serde(default)]
-    event_id: String,
-    #[serde(default)]
-    event_type: String,
-    #[serde(default)]
-    occurred_at: Option<String>,
-    basket_id: String,
-    address: Option<AddressPayload>,
-    #[serde(default)]
-    items: Vec<ItemPayload>,
-    #[serde(default)]
-    delivery_period: Option<DeliveryPeriodPayload>,
-    volume: i32,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct AddressPayload {
-    country: String,
-    city: String,
-    street: String,
-    house: String,
-    apartment: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ItemPayload {
-    id: String,
-    good_id: String,
-    title: String,
-    price: f64,
-    quantity: i32,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct DeliveryPeriodPayload {
-    from: i32,
-    to: i32,
 }
