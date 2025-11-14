@@ -1,4 +1,5 @@
 pub mod commands;
+pub mod events;
 pub mod queries;
 
 #[trait_variant::make(HttpService: Send)]
