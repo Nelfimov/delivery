@@ -1746,6 +1746,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "out_kafka"
+version = "0.1.0"
+dependencies = [
+ "application",
+ "domain",
+ "ports",
+ "prost",
+ "prost-build",
+ "prost-types",
+ "rdkafka",
+ "serde",
+ "serde_json",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "out_postgres"
 version = "0.1.0"
 dependencies = [

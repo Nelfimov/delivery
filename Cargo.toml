@@ -9,7 +9,7 @@ members = [
   "internal/adapters/in/http",
   "entrypoint",
   "internal/adapters/out/grpc/geo",
-  "internal/adapters/in/kafka",
+  "internal/adapters/in/kafka", "internal/adapters/out/kafka",
 ]
 
 [workspace.dependencies]
