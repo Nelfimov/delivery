@@ -1,5 +1,6 @@
 use uuid::Uuid;
 
+#[derive(Clone, Debug)]
 pub struct OrderCompletedEvent {
     id: String,
     order_id: String,
