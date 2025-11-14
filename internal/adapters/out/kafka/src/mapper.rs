@@ -9,10 +9,10 @@ use crate::order_event_gen::OrderCreatedIntegrationEvent;
 impl From<OrderCompletedEvent> for OrderCompletedIntegrationEvent {
     fn from(v: OrderCompletedEvent) -> Self {
         Self {
-            order_id: v.order_id(),
             event_id: v.id(),
             event_type: "completed".to_string(),
             occurred_at: Some(Timestamp::from(SystemTime::now())),
+            order_id: v.order_id(),
             courier_id: v.courier_id(),
         }
     }
