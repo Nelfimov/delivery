@@ -16,20 +16,20 @@ pub trait CommandHandler<C, R> {
     async fn execute(&mut self, command: C) -> Result<R, Self::Error>;
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 pub trait OrderCreatedSubscriber: Send {
     async fn on_order_created(&mut self, event: OrderCreatedEvent) -> Result<(), CommandError>;
 }
 
-#[allow(async_fn_in_trait)]
-pub trait EventHandler<C, R> {
+#[trait_variant::make(Send)]
+pub trait EventHandler<C, R>: Send {
     type Error;
 
     async fn execute(&mut self, event: C) -> Result<R, Self::Error>;
 }
 
-#[allow(async_fn_in_trait)]
-pub trait EventBus {
+#[trait_variant::make(Send)]
+pub trait EventBus: Send {
     fn register_order_created<S>(&mut self, subscriber: S)
     where
         S: OrderCreatedSubscriber + 'static;
@@ -39,7 +39,7 @@ pub trait EventBus {
     async fn commit(&mut self, e: Events) -> Result<(), CommandError>;
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 pub trait OrderCompletedSubscriber: Send {
     async fn on_order_completed(&mut self, event: OrderCompletedEvent) -> Result<(), CommandError>;
 }

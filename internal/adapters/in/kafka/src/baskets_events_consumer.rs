@@ -1,6 +1,11 @@
+use application::errors::command_errors::CommandError;
 use application::usecases::CommandHandler;
+use application::usecases::EventBus;
+use application::usecases::OrderCompletedSubscriber;
+use application::usecases::OrderCreatedSubscriber;
 use application::usecases::commands::create_order_command::CreateOrderCommand;
 use application::usecases::commands::create_order_handler::CreateOrderHandler;
+use ports::events_producer_port::Events;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use rdkafka::ClientConfig;
@@ -8,7 +13,9 @@ use rdkafka::Message;
 use rdkafka::consumer::Consumer;
 use rdkafka::consumer::StreamConsumer;
 use std::str::FromStr;
+use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::Mutex as AsyncMutex;
 use tracing::Level;
 use tracing::debug;
 use tracing::event;
@@ -21,22 +28,31 @@ use crate::shared::Shared;
 
 static TOPIC: [&str; 1] = ["baskets.events"];
 
-pub struct BasketEventsConsumer<OR, GS>
+pub struct BasketEventsConsumer<OR, GS, EB>
 where
     OR: OrderRepositoryPort,
     GS: GeoServicePort + Clone,
+    EB: EventBus,
 {
     consumer: StreamConsumer,
     order_repo: Shared<OR>,
     geo_service: GS,
+    event_bus: EventBusHandle<EB>,
 }
 
-impl<OR, GS> BasketEventsConsumer<OR, GS>
+impl<OR, GS, EB> BasketEventsConsumer<OR, GS, EB>
 where
     OR: OrderRepositoryPort,
     GS: GeoServicePort + Clone,
+    EB: EventBus,
 {
-    pub fn new(brokers: &str, group_id: &str, order_repo: Shared<OR>, geo_service: GS) -> Self {
+    pub fn new(
+        brokers: &str,
+        group_id: &str,
+        order_repo: Shared<OR>,
+        geo_service: GS,
+        event_bus: EB,
+    ) -> Self {
         let mut config = ClientConfig::new();
 
         let consumer: StreamConsumer = config
@@ -60,6 +76,7 @@ where
             consumer,
             order_repo,
             geo_service,
+            event_bus: EventBusHandle::new(event_bus),
         }
     }
 
@@ -131,8 +148,11 @@ where
                         }
                     };
 
-                    let mut handler =
-                        CreateOrderHandler::new(self.order_repo.clone(), self.geo_service.clone());
+                    let mut handler = CreateOrderHandler::new(
+                        self.order_repo.clone(),
+                        self.geo_service.clone(),
+                        self.event_bus.clone(),
+                    );
 
                     if let Err(err) = handler.execute(command).await {
                         warn!(?err, "failed to handle BasketConfirmedIntegrationEvent");
@@ -152,5 +172,51 @@ where
                 }
             }
         }
+    }
+}
+
+struct EventBusHandle<EB> {
+    inner: Arc<AsyncMutex<EB>>,
+}
+
+impl<EB> Clone for EventBusHandle<EB> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
+
+impl<EB> EventBusHandle<EB> {
+    fn new(inner: EB) -> Self {
+        Self {
+            inner: Arc::new(AsyncMutex::new(inner)),
+        }
+    }
+}
+
+impl<EB> EventBus for EventBusHandle<EB>
+where
+    EB: EventBus,
+{
+    fn register_order_created<S>(&mut self, subscriber: S)
+    where
+        S: OrderCreatedSubscriber + 'static,
+    {
+        let mut guard = Arc::clone(&self.inner).blocking_lock_owned();
+        guard.register_order_created(subscriber);
+    }
+
+    fn register_order_completed<S>(&mut self, subscriber: S)
+    where
+        S: OrderCompletedSubscriber + 'static,
+    {
+        let mut guard = Arc::clone(&self.inner).blocking_lock_owned();
+        guard.register_order_completed(subscriber);
+    }
+
+    async fn commit(&mut self, e: Events) -> Result<(), CommandError> {
+        let mut guard = Arc::clone(&self.inner).lock_owned().await;
+        guard.commit(e).await
     }
 }

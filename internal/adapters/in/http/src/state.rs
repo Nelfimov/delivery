@@ -1,4 +1,7 @@
+use application::errors::command_errors::CommandError;
 use application::usecases::EventBus;
+use application::usecases::OrderCompletedSubscriber;
+use application::usecases::OrderCreatedSubscriber;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
 use domain::model::order::order_aggregate::Order;
@@ -6,11 +9,13 @@ use domain::model::order::order_aggregate::OrderId;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
+use ports::events_producer_port::Events;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
 use std::sync::Arc;
 use std::sync::Mutex;
+use tokio::sync::Mutex as AsyncMutex;
 
 pub struct Shared<T> {
     inner: Arc<Mutex<T>>,
@@ -109,7 +114,7 @@ where
     order_repo: Shared<OR>,
     uow: Arc<Mutex<UOW>>,
     geo_service: GS,
-    order_event_bus: EB,
+    order_event_bus: AsyncShared<EB>,
 }
 
 impl<CR, OR, UOW, GS, EB> AppState<CR, OR, UOW, GS, EB>
@@ -132,7 +137,7 @@ where
             order_repo: Shared::new(order_repo),
             uow: Arc::new(Mutex::new(uow)),
             geo_service,
-            order_event_bus,
+            order_event_bus: AsyncShared::new(order_event_bus),
         }
     }
 
@@ -152,7 +157,53 @@ where
         self.geo_service.clone()
     }
 
-    pub fn order_event_bus(&mut self) -> &mut EB {
-        &mut self.order_event_bus
+    pub fn order_event_bus(&self) -> AsyncShared<EB> {
+        self.order_event_bus.clone()
+    }
+}
+
+pub struct AsyncShared<T> {
+    inner: Arc<AsyncMutex<T>>,
+}
+
+impl<T> Clone for AsyncShared<T> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
+
+impl<T> AsyncShared<T> {
+    pub fn new(inner: T) -> Self {
+        Self {
+            inner: Arc::new(AsyncMutex::new(inner)),
+        }
+    }
+}
+
+impl<EB> EventBus for AsyncShared<EB>
+where
+    EB: EventBus,
+{
+    fn register_order_created<S>(&mut self, subscriber: S)
+    where
+        S: OrderCreatedSubscriber + 'static,
+    {
+        let mut guard = Arc::clone(&self.inner).blocking_lock_owned();
+        guard.register_order_created(subscriber);
+    }
+
+    fn register_order_completed<S>(&mut self, subscriber: S)
+    where
+        S: OrderCompletedSubscriber + 'static,
+    {
+        let mut guard = Arc::clone(&self.inner).blocking_lock_owned();
+        guard.register_order_completed(subscriber);
+    }
+
+    async fn commit(&mut self, e: Events) -> Result<(), CommandError> {
+        let mut guard = Arc::clone(&self.inner).lock_owned().await;
+        guard.commit(e).await
     }
 }

@@ -7,14 +7,14 @@ use crate::usecases::EventHandler;
 
 pub struct OrderCompletedEventHandler<EP>
 where
-    EP: EventsProducerPort,
+    EP: EventsProducerPort + Send + Sync,
 {
     producer: EP,
 }
 
 impl<EP> OrderCompletedEventHandler<EP>
 where
-    EP: EventsProducerPort,
+    EP: EventsProducerPort + Send + Sync,
 {
     pub fn new(producer: EP) -> Self {
         Self { producer }
@@ -23,7 +23,7 @@ where
 
 impl<EP> EventHandler<OrderCompletedEvent, ()> for OrderCompletedEventHandler<EP>
 where
-    EP: EventsProducerPort,
+    EP: EventsProducerPort + Send + Sync,
 {
     type Error = CommandError;
 

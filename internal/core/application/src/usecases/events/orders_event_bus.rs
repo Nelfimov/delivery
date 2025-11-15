@@ -11,28 +11,28 @@ use crate::usecases::EventHandler;
 use crate::usecases::OrderCompletedSubscriber;
 use crate::usecases::OrderCreatedSubscriber;
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<T> OrderCreatedSubscriber for T
 where
-    T: EventHandler<OrderCreatedEvent, (), Error = CommandError> + Send,
+    T: EventHandler<OrderCreatedEvent, (), Error = CommandError> + Send + Sync,
 {
     async fn on_order_created(&mut self, event: OrderCreatedEvent) -> Result<(), CommandError> {
         self.execute(event).await
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<T> OrderCompletedSubscriber for T
 where
-    T: EventHandler<OrderCompletedEvent, (), Error = CommandError> + Send,
+    T: EventHandler<OrderCompletedEvent, (), Error = CommandError> + Send + Sync,
 {
     async fn on_order_completed(&mut self, event: OrderCompletedEvent) -> Result<(), CommandError> {
         self.execute(event).await
     }
 }
 
-type OrderCreatedBox = Arc<Mutex<dyn OrderCreatedSubscriber>>;
-type OrderCompletedBox = Arc<Mutex<dyn OrderCompletedSubscriber>>;
+type OrderCreatedBox = Arc<Mutex<dyn OrderCreatedSubscriber + Send>>;
+type OrderCompletedBox = Arc<Mutex<dyn OrderCompletedSubscriber + Send>>;
 
 #[derive(Default)]
 pub struct OrdersEventBus {
