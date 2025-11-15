@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct BasketEventPayload {
     #[serde(default)]
     pub event_id: String,
@@ -20,6 +21,7 @@ pub struct BasketEventPayload {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct AddressPayload {
     pub country: String,
     pub city: String,
@@ -30,6 +32,7 @@ pub struct AddressPayload {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct ItemPayload {
     pub id: String,
     pub good_id: String,
@@ -40,6 +43,7 @@ pub struct ItemPayload {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct DeliveryPeriodPayload {
     pub from: i32,
     pub to: i32,

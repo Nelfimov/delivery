@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::fmt::Display;
 use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
@@ -14,13 +16,48 @@ use domain::model::order::order_aggregate::OrderStatus;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
+use ports::events_producer_port::Events;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
 use uuid::Uuid;
 
+use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
+use crate::usecases::EventBus;
+use crate::usecases::OrderCompletedSubscriber;
+use crate::usecases::OrderCreatedSubscriber;
 use crate::usecases::commands::move_couriers_command::MoveCouriersCommand;
 use crate::usecases::commands::move_couriers_handler::MoveCouriersHandler;
+
+struct RecordingEventBus {
+    events: Arc<Mutex<Vec<Events>>>,
+}
+
+impl RecordingEventBus {
+    fn new(events: Arc<Mutex<Vec<Events>>>) -> Self {
+        Self { events }
+    }
+}
+
+impl EventBus for RecordingEventBus {
+    fn register_order_created<S>(&mut self, _subscriber: S)
+    where
+        S: OrderCreatedSubscriber + 'static,
+    {
+    }
+
+    fn register_order_completed<S>(&mut self, _subscriber: S)
+    where
+        S: OrderCompletedSubscriber + 'static,
+    {
+    }
+
+    async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
+        let mut events = self.events.lock().expect("event log poisoned");
+        events.push(event);
+        Ok(())
+    }
+}
 
 #[derive(Clone, Debug)]
 struct StoredOrder {
@@ -321,11 +358,13 @@ async fn handle_completes_assigned_orders() {
     let (orders, couriers) = initial_state();
     let orders_state = Rc::new(RefCell::new(orders));
     let couriers_state = Rc::new(RefCell::new(couriers));
+    let observed_events = Arc::new(Mutex::new(Vec::new()));
+    let event_bus = RecordingEventBus::new(observed_events.clone());
 
-    let mut handler = MoveCouriersHandler::new(TestUnitOfWork::from_state(
-        Rc::clone(&orders_state),
-        Rc::clone(&couriers_state),
-    ));
+    let mut handler = MoveCouriersHandler::new(
+        TestUnitOfWork::from_state(Rc::clone(&orders_state), Rc::clone(&couriers_state)),
+        event_bus,
+    );
     let command = MoveCouriersCommand::new().expect("command should be valid");
 
     handler
@@ -343,5 +382,10 @@ async fn handle_completes_assigned_orders() {
         orders
             .iter()
             .any(|order| matches!(order.status, OrderStatus::Completed))
+    );
+
+    assert!(
+        !observed_events.lock().expect("event log poisoned").is_empty(),
+        "completing orders should emit events"
     );
 }

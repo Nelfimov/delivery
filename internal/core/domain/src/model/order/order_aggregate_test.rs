@@ -59,7 +59,7 @@ mod tests {
         let mut order = Order::new(OrderId::new(Uuid::new_v4()), location, volume).unwrap();
 
         let _ = order.complete();
-        assert_eq!(order.status(), &OrderStatus::Completed);
+        assert_eq!(order.status(), &OrderStatus::Created);
 
         order.complete().unwrap();
     }

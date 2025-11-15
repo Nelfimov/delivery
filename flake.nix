@@ -22,11 +22,10 @@
             pkgs.rustc
             rustfmt
             pkgs.clippy
-            pkgs.go
-            pkgs.postgresql
             pkgs.diesel-cli
             pkgs.openapi-generator-cli
             pkgs.protobuf
+            pkgs.libpq
           ];
 
           shellHook = ''

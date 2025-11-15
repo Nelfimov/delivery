@@ -3,10 +3,12 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use application::usecases::CommandHandler;
+use application::usecases::EventBus;
 use application::usecases::commands::assign_order_command::AssignOrderCommand;
 use application::usecases::commands::assign_order_handler::AssignOrderHandler;
 use application::usecases::commands::move_couriers_command::MoveCouriersCommand;
 use application::usecases::commands::move_couriers_handler::MoveCouriersHandler;
+use in_http::state::AsyncShared;
 use out_postgres::ConnectionManager;
 use out_postgres::PgConnection;
 use out_postgres::Pool;
@@ -16,14 +18,21 @@ use tokio::task;
 use tokio_cron_scheduler::Job;
 use tokio_cron_scheduler::JobScheduler;
 
-pub async fn start_crons(pool: Pool<ConnectionManager<PgConnection>>) -> JobScheduler {
+pub async fn start_crons<EB>(
+    pool: Pool<ConnectionManager<PgConnection>>,
+    event_bus: AsyncShared<EB>,
+) -> JobScheduler
+where
+    EB: EventBus + Send + 'static,
+{
     let scheduler = JobScheduler::new()
         .await
         .expect("failed to initialize cron scheduler");
 
-    let move_couriers_handler = Arc::new(Mutex::new(MoveCouriersHandler::new(UnitOfWork::new(
-        pool.clone(),
-    ))));
+    let move_couriers_handler = Arc::new(Mutex::new(MoveCouriersHandler::new(
+        UnitOfWork::new(pool.clone()),
+        event_bus,
+    )));
     let move_couriers_handler_job = Arc::clone(&move_couriers_handler);
     let runtime_handle = Handle::current();
     let move_job_handle = runtime_handle.clone();
