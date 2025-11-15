@@ -1,6 +1,7 @@
 use application::errors::command_errors::CommandError;
 use application::errors::query_errors::QueryError;
 use application::usecases::CommandHandler;
+use application::usecases::EventBus;
 use application::usecases::commands::create_courier_command::CreateCourierCommand;
 use application::usecases::commands::create_courier_handler::CreateCourierHandler;
 use application::usecases::commands::create_order_command::CreateOrderCommand;
@@ -23,7 +24,6 @@ use openapi::apis::default::GetCouriersResponse;
 use openapi::apis::default::GetOrdersResponse;
 use openapi::models;
 use ports::courier_repository_port::CourierRepositoryPort;
-use ports::events_producer_port::EventsProducerPort;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
@@ -33,55 +33,55 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-pub struct ServerImpl<CR, OR, UOW, GS, OEB>
+pub struct ServerImpl<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    OEB: EventsProducerPort + Send + 'static,
+    EB: EventBus + Send + 'static,
 {
-    state: Arc<AppState<CR, OR, UOW, GS, OEB>>,
+    state: Arc<AppState<CR, OR, UOW, GS, EB>>,
 }
 
-impl<CR, OR, UOW, GS, OEB> ServerImpl<CR, OR, UOW, GS, OEB>
+impl<CR, OR, UOW, GS, EB> ServerImpl<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    OEB: EventsProducerPort + Send + 'static,
+    EB: EventBus + Send + 'static,
 {
-    pub fn new(state: Arc<AppState<CR, OR, UOW, GS, OEB>>) -> Self {
+    pub fn new(state: Arc<AppState<CR, OR, UOW, GS, EB>>) -> Self {
         Self { state }
     }
 
-    fn state(&self) -> &AppState<CR, OR, UOW, GS, OEB> {
+    fn state(&self) -> &AppState<CR, OR, UOW, GS, EB> {
         self.state.as_ref()
     }
 }
 
 #[async_trait]
-impl<CR, OR, UOW, GS, OEB, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW, GS, OEB>
+impl<CR, OR, UOW, GS, EB, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    OEB: EventsProducerPort + Send + 'static,
+    EB: EventBus + Send + 'static,
     E: Send + Sync + Debug + 'static,
 {
 }
 
 #[allow(unused_variables)]
 #[async_trait]
-impl<CR, OR, UOW, GS, E, OEB> DefaultApi<E> for ServerImpl<CR, OR, UOW, GS, OEB>
+impl<CR, OR, UOW, GS, E, EB> DefaultApi<E> for ServerImpl<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    OEB: EventsProducerPort + Send + 'static,
+    EB: EventBus + Send + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(

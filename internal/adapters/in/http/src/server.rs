@@ -1,5 +1,5 @@
+use application::usecases::EventBus;
 use ports::courier_repository_port::CourierRepositoryPort;
-use ports::events_producer_port::EventsProducerPort;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
@@ -34,19 +34,19 @@ async fn shutdown_signal() {
     }
 }
 
-pub async fn start_server<CR, OR, UOW, GS, OEB>(addr: &str, state: AppState<CR, OR, UOW, GS, OEB>)
+pub async fn start_server<CR, OR, UOW, GS, EB>(addr: &str, state: AppState<CR, OR, UOW, GS, EB>)
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    OEB: EventsProducerPort + Send + 'static,
+    EB: EventBus + Send + 'static,
 {
     let shared_state = Arc::new(state);
     let handler = Arc::new(ServerImpl::new(shared_state));
     let app = openapi::server::new::<
-        Arc<ServerImpl<CR, OR, UOW, GS, OEB>>,
-        ServerImpl<CR, OR, UOW, GS, OEB>,
+        Arc<ServerImpl<CR, OR, UOW, GS, EB>>,
+        ServerImpl<CR, OR, UOW, GS, EB>,
         (),
     >(handler);
 

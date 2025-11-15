@@ -1,6 +1,4 @@
-use std::sync::Arc;
-use std::sync::Mutex;
-
+use application::usecases::EventBus;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
 use domain::model::order::order_aggregate::Order;
@@ -8,10 +6,11 @@ use domain::model::order::order_aggregate::OrderId;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
-use ports::events_producer_port::EventsProducerPort;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 pub struct Shared<T> {
     inner: Arc<Mutex<T>>,
@@ -98,42 +97,42 @@ where
     }
 }
 
-pub struct AppState<CR, OR, UOW, GS, OEB>
+pub struct AppState<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    OEB: EventsProducerPort + Send + 'static,
+    EB: EventBus + Send + 'static,
 {
     courier_repo: Shared<CR>,
     order_repo: Shared<OR>,
     uow: Arc<Mutex<UOW>>,
     geo_service: GS,
-    order_event_bus: Shared<OEB>,
+    order_event_bus: EB,
 }
 
-impl<CR, OR, UOW, GS, OEB> AppState<CR, OR, UOW, GS, OEB>
+impl<CR, OR, UOW, GS, EB> AppState<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    OEB: EventsProducerPort + Send + 'static,
+    EB: EventBus + Send + 'static,
 {
     pub fn new(
         courier_repo: CR,
         order_repo: OR,
         uow: UOW,
         geo_service: GS,
-        order_event_bus: OEB,
+        order_event_bus: EB,
     ) -> Self {
         Self {
             courier_repo: Shared::new(courier_repo),
             order_repo: Shared::new(order_repo),
             uow: Arc::new(Mutex::new(uow)),
             geo_service,
-            order_event_bus: Shared::new(order_event_bus),
+            order_event_bus,
         }
     }
 
@@ -153,7 +152,7 @@ where
         self.geo_service.clone()
     }
 
-    pub fn order_event_bus(&mut self) -> Shared<OEB> {
-        self.order_event_bus.clone()
+    pub fn order_event_bus(&mut self) -> &mut EB {
+        &mut self.order_event_bus
     }
 }
