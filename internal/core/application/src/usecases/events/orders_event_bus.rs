@@ -6,15 +6,15 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::errors::command_errors::CommandError;
-use crate::usecases::CommandHandler;
 use crate::usecases::EventBus;
+use crate::usecases::EventHandler;
 use crate::usecases::OrderCompletedSubscriber;
 use crate::usecases::OrderCreatedSubscriber;
 
 #[async_trait(?Send)]
 impl<T> OrderCreatedSubscriber for T
 where
-    T: CommandHandler<OrderCreatedEvent, (), Error = CommandError> + Send,
+    T: EventHandler<OrderCreatedEvent, (), Error = CommandError> + Send,
 {
     async fn on_order_created(&mut self, event: OrderCreatedEvent) -> Result<(), CommandError> {
         self.execute(event).await
@@ -24,7 +24,7 @@ where
 #[async_trait(?Send)]
 impl<T> OrderCompletedSubscriber for T
 where
-    T: CommandHandler<OrderCompletedEvent, (), Error = CommandError> + Send,
+    T: EventHandler<OrderCompletedEvent, (), Error = CommandError> + Send,
 {
     async fn on_order_completed(&mut self, event: OrderCompletedEvent) -> Result<(), CommandError> {
         self.execute(event).await

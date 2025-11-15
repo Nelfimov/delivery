@@ -22,6 +22,13 @@ pub trait OrderCreatedSubscriber: Send {
 }
 
 #[allow(async_fn_in_trait)]
+pub trait EventHandler<C, R> {
+    type Error;
+
+    async fn execute(&mut self, event: C) -> Result<R, Self::Error>;
+}
+
+#[allow(async_fn_in_trait)]
 pub trait EventBus {
     fn register_order_created<S>(&mut self, subscriber: S)
     where

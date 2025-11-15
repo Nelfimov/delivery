@@ -3,7 +3,7 @@ use ports::events_producer_port::Events;
 use ports::events_producer_port::EventsProducerPort;
 
 use crate::errors::command_errors::CommandError;
-use crate::usecases::CommandHandler;
+use crate::usecases::EventHandler;
 
 pub struct OrderCompletedEventHandler<EP>
 where
@@ -21,7 +21,7 @@ where
     }
 }
 
-impl<EP> CommandHandler<OrderCompletedEvent, ()> for OrderCompletedEventHandler<EP>
+impl<EP> EventHandler<OrderCompletedEvent, ()> for OrderCompletedEventHandler<EP>
 where
     EP: EventsProducerPort,
 {
