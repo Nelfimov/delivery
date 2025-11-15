@@ -1,5 +1,7 @@
+use domain::model::order::order_completed_event::OrderCompletedEvent;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::errors::RepositoryError;
+use ports::events_producer_port::Events;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
 use std::fmt::Debug;
@@ -9,32 +11,39 @@ use tracing::warn;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
+use crate::usecases::EventBus;
 use crate::usecases::commands::move_couriers_command::MoveCouriersCommand;
 
-pub struct MoveCouriersHandler<UOW>
+pub struct MoveCouriersHandler<UOW, EB>
 where
     UOW: UnitOfWorkPort + Debug,
+    EB: EventBus,
 {
     uow: UOW,
+    event_bus: EB,
 }
 
-impl<UOW> MoveCouriersHandler<UOW>
+impl<UOW, EB> MoveCouriersHandler<UOW, EB>
 where
     UOW: UnitOfWorkPort + Debug,
+    EB: EventBus,
 {
-    pub fn new(uow: UOW) -> Self {
-        Self { uow }
+    pub fn new(uow: UOW, event_bus: EB) -> Self {
+        Self { uow, event_bus }
     }
 }
 
-impl<UOW> CommandHandler<MoveCouriersCommand, ()> for MoveCouriersHandler<UOW>
+impl<UOW, EB> CommandHandler<MoveCouriersCommand, ()> for MoveCouriersHandler<UOW, EB>
 where
     UOW: UnitOfWorkPort + Debug,
+    EB: EventBus,
 {
     type Error = CommandError;
 
     #[instrument(skip_all)]
     async fn execute(&mut self, _command: MoveCouriersCommand) -> Result<(), Self::Error> {
+        let mut pending_events = Vec::new();
+
         self.uow
             .transaction(|tx| {
                 let mut assigned_orders = {
@@ -87,6 +96,10 @@ where
                         order
                             .complete()
                             .map_err(|err| RepositoryError::from(err.to_string()))?;
+                        pending_events.push(Events::OrderCompleted(OrderCompletedEvent::new(
+                            order.id().0,
+                            courier.id().0,
+                        )));
                     }
 
                     {
@@ -103,6 +116,10 @@ where
                 Ok(())
             })
             .map_err(|e| CommandError::ExecutionError(e.to_string()))?;
+
+        for event in pending_events {
+            self.event_bus.commit(event).await?;
+        }
 
         Ok(())
     }

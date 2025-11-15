@@ -70,7 +70,8 @@ async fn main() {
         consumer_event_bus,
     );
 
-    let mut scheduler = start_crons(pool.clone()).await;
+    let cron_event_bus = orders_event_bus.clone();
+    let mut scheduler = start_crons(pool.clone(), cron_event_bus).await;
 
     let consumer_order_repo = Shared::new(OrderRepository::new(pool.clone()));
     let consumer_geo_service = geo_service;
