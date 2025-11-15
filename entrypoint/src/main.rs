@@ -1,6 +1,7 @@
 mod config;
 mod cron;
 
+use application::usecases::events::orders_event_bus::OrdersEventBus;
 use in_http::server::start_server;
 use in_http::state::AppState;
 use in_kafka::baskets_events_consumer::BasketEventsConsumer;
@@ -46,7 +47,15 @@ async fn main() {
     let order_repo = OrderRepository::new(pool.clone());
     let uow = UnitOfWork::new(pool.clone());
 
-    let app_state = AppState::new(courier_repo, order_repo, uow, geo_service.clone());
+    let orders_event_bus = OrdersEventBus::new();
+
+    let app_state = AppState::new(
+        courier_repo,
+        order_repo,
+        uow,
+        geo_service.clone(),
+        orders_event_bus,
+    );
 
     let mut scheduler = start_crons(pool.clone()).await;
 

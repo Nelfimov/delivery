@@ -8,6 +8,7 @@ use domain::model::order::order_aggregate::OrderId;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
+use ports::events_producer_port::EventsProducerPort;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
@@ -97,32 +98,42 @@ where
     }
 }
 
-pub struct AppState<CR, OR, UOW, GS>
+pub struct AppState<CR, OR, UOW, GS, OEB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    OEB: EventsProducerPort + Send + 'static,
 {
     courier_repo: Shared<CR>,
     order_repo: Shared<OR>,
     uow: Arc<Mutex<UOW>>,
     geo_service: GS,
+    order_event_bus: Shared<OEB>,
 }
 
-impl<CR, OR, UOW, GS> AppState<CR, OR, UOW, GS>
+impl<CR, OR, UOW, GS, OEB> AppState<CR, OR, UOW, GS, OEB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    OEB: EventsProducerPort + Send + 'static,
 {
-    pub fn new(courier_repo: CR, order_repo: OR, uow: UOW, geo_service: GS) -> Self {
+    pub fn new(
+        courier_repo: CR,
+        order_repo: OR,
+        uow: UOW,
+        geo_service: GS,
+        order_event_bus: OEB,
+    ) -> Self {
         Self {
             courier_repo: Shared::new(courier_repo),
             order_repo: Shared::new(order_repo),
             uow: Arc::new(Mutex::new(uow)),
             geo_service,
+            order_event_bus: Shared::new(order_event_bus),
         }
     }
 
@@ -140,5 +151,9 @@ where
 
     pub fn geo_service(&self) -> GS {
         self.geo_service.clone()
+    }
+
+    pub fn order_event_bus(&mut self) -> Shared<OEB> {
+        self.order_event_bus.clone()
     }
 }

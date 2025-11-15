@@ -5,6 +5,9 @@ use ports::events_producer_port::Events;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
+use crate::usecases::EventBus;
+use crate::usecases::OrderCompletedSubscriber;
+use crate::usecases::OrderCreatedSubscriber;
 
 type OrderCreatedBox = Box<dyn OrderCreatedSubscriber>;
 type OrderCompletedBox = Box<dyn OrderCompletedSubscriber>;
@@ -22,22 +25,24 @@ impl OrdersEventBus {
             order_completed_subscribers: Vec::new(),
         }
     }
+}
 
-    pub fn register_order_created<S>(&mut self, subscriber: S)
+impl EventBus for OrdersEventBus {
+    fn register_order_created<S>(&mut self, subscriber: S)
     where
         S: OrderCreatedSubscriber + 'static,
     {
         self.order_created_subscribers.push(Box::new(subscriber));
     }
 
-    pub fn register_order_completed<S>(&mut self, subscriber: S)
+    fn register_order_completed<S>(&mut self, subscriber: S)
     where
         S: OrderCompletedSubscriber + 'static,
     {
         self.order_completed_subscribers.push(Box::new(subscriber));
     }
 
-    pub async fn publish(&mut self, event: Events) -> Result<(), CommandError> {
+    async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
         match event {
             Events::OrderCreated(event) => {
                 for subscriber in &mut self.order_created_subscribers {
@@ -56,11 +61,6 @@ impl OrdersEventBus {
 }
 
 #[async_trait(?Send)]
-pub trait OrderCreatedSubscriber: Send {
-    async fn on_order_created(&mut self, event: OrderCreatedEvent) -> Result<(), CommandError>;
-}
-
-#[async_trait(?Send)]
 impl<T> OrderCreatedSubscriber for T
 where
     T: CommandHandler<OrderCreatedEvent, (), Error = CommandError> + Send,
@@ -68,11 +68,6 @@ where
     async fn on_order_created(&mut self, event: OrderCreatedEvent) -> Result<(), CommandError> {
         self.execute(event).await
     }
-}
-
-#[async_trait(?Send)]
-pub trait OrderCompletedSubscriber: Send {
-    async fn on_order_completed(&mut self, event: OrderCompletedEvent) -> Result<(), CommandError>;
 }
 
 #[async_trait(?Send)]

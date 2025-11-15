@@ -23,6 +23,7 @@ use openapi::apis::default::GetCouriersResponse;
 use openapi::apis::default::GetOrdersResponse;
 use openapi::models;
 use ports::courier_repository_port::CourierRepositoryPort;
+use ports::events_producer_port::EventsProducerPort;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
@@ -32,51 +33,55 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-pub struct ServerImpl<CR, OR, UOW, GS>
+pub struct ServerImpl<CR, OR, UOW, GS, OEB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    OEB: EventsProducerPort + Send + 'static,
 {
-    state: Arc<AppState<CR, OR, UOW, GS>>,
+    state: Arc<AppState<CR, OR, UOW, GS, OEB>>,
 }
 
-impl<CR, OR, UOW, GS> ServerImpl<CR, OR, UOW, GS>
+impl<CR, OR, UOW, GS, OEB> ServerImpl<CR, OR, UOW, GS, OEB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    OEB: EventsProducerPort + Send + 'static,
 {
-    pub fn new(state: Arc<AppState<CR, OR, UOW, GS>>) -> Self {
+    pub fn new(state: Arc<AppState<CR, OR, UOW, GS, OEB>>) -> Self {
         Self { state }
     }
 
-    fn state(&self) -> &AppState<CR, OR, UOW, GS> {
+    fn state(&self) -> &AppState<CR, OR, UOW, GS, OEB> {
         self.state.as_ref()
     }
 }
 
 #[async_trait]
-impl<CR, OR, UOW, GS, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW, GS>
+impl<CR, OR, UOW, GS, OEB, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW, GS, OEB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    OEB: EventsProducerPort + Send + 'static,
     E: Send + Sync + Debug + 'static,
 {
 }
 
 #[allow(unused_variables)]
 #[async_trait]
-impl<CR, OR, UOW, GS, E> DefaultApi<E> for ServerImpl<CR, OR, UOW, GS>
+impl<CR, OR, UOW, GS, E, OEB> DefaultApi<E> for ServerImpl<CR, OR, UOW, GS, OEB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    OEB: EventsProducerPort + Send + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(

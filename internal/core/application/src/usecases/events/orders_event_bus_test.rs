@@ -6,6 +6,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
+use crate::usecases::EventBus;
 use crate::usecases::events::order_completed_event_handler::OrderCompletedEventHandler;
 use crate::usecases::events::order_created_event_hander::OrderCreatedEventHandler;
 use crate::usecases::events::orders_event_bus::OrdersEventBus;
@@ -43,11 +44,11 @@ async fn fans_out_created_and_completed_events() {
     let order_id = Uuid::new_v4();
     let courier_id = Uuid::new_v4();
 
-    bus.publish(Events::OrderCreated(OrderCreatedEvent::new(order_id)))
+    bus.commit(Events::OrderCreated(OrderCreatedEvent::new(order_id)))
         .await
         .unwrap();
 
-    bus.publish(Events::OrderCompleted(OrderCompletedEvent::new(
+    bus.commit(Events::OrderCompleted(OrderCompletedEvent::new(
         order_id, courier_id,
     )))
     .await
