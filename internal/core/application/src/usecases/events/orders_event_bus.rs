@@ -2,6 +2,8 @@ use async_trait::async_trait;
 use domain::model::order::order_completed_event::OrderCompletedEvent;
 use domain::model::order::order_created_event::OrderCreatedEvent;
 use ports::events_producer_port::Events;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
@@ -9,8 +11,28 @@ use crate::usecases::EventBus;
 use crate::usecases::OrderCompletedSubscriber;
 use crate::usecases::OrderCreatedSubscriber;
 
-type OrderCreatedBox = Box<dyn OrderCreatedSubscriber>;
-type OrderCompletedBox = Box<dyn OrderCompletedSubscriber>;
+#[async_trait(?Send)]
+impl<T> OrderCreatedSubscriber for T
+where
+    T: CommandHandler<OrderCreatedEvent, (), Error = CommandError> + Send,
+{
+    async fn on_order_created(&mut self, event: OrderCreatedEvent) -> Result<(), CommandError> {
+        self.execute(event).await
+    }
+}
+
+#[async_trait(?Send)]
+impl<T> OrderCompletedSubscriber for T
+where
+    T: CommandHandler<OrderCompletedEvent, (), Error = CommandError> + Send,
+{
+    async fn on_order_completed(&mut self, event: OrderCompletedEvent) -> Result<(), CommandError> {
+        self.execute(event).await
+    }
+}
+
+type OrderCreatedBox = Arc<Mutex<dyn OrderCreatedSubscriber>>;
+type OrderCompletedBox = Arc<Mutex<dyn OrderCompletedSubscriber>>;
 
 #[derive(Default)]
 pub struct OrdersEventBus {
@@ -32,50 +54,46 @@ impl EventBus for OrdersEventBus {
     where
         S: OrderCreatedSubscriber + 'static,
     {
-        self.order_created_subscribers.push(Box::new(subscriber));
+        self.order_created_subscribers
+            .push(Arc::new(Mutex::new(subscriber)));
     }
 
     fn register_order_completed<S>(&mut self, subscriber: S)
     where
         S: OrderCompletedSubscriber + 'static,
     {
-        self.order_completed_subscribers.push(Box::new(subscriber));
+        self.order_completed_subscribers
+            .push(Arc::new(Mutex::new(subscriber)));
     }
 
     async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
         match event {
             Events::OrderCreated(event) => {
                 for subscriber in &mut self.order_created_subscribers {
-                    subscriber.on_order_created(event.clone()).await?;
+                    match subscriber.lock() {
+                        Ok(mut s) => {
+                            s.on_order_created(event.clone()).await?;
+                        }
+                        Err(e) => {
+                            CommandError::ExecutionError(format!("mutex is ill: {}", e));
+                        }
+                    }
                 }
             }
             Events::OrderCompleted(event) => {
                 for subscriber in &mut self.order_completed_subscribers {
-                    subscriber.on_order_completed(event.clone()).await?;
+                    match subscriber.lock() {
+                        Ok(mut s) => {
+                            s.on_order_completed(event.clone()).await?;
+                        }
+                        Err(e) => {
+                            CommandError::ExecutionError(format!("mutex is ill: {}", e));
+                        }
+                    }
                 }
             }
         };
 
         Ok(())
-    }
-}
-
-#[async_trait(?Send)]
-impl<T> OrderCreatedSubscriber for T
-where
-    T: CommandHandler<OrderCreatedEvent, (), Error = CommandError> + Send,
-{
-    async fn on_order_created(&mut self, event: OrderCreatedEvent) -> Result<(), CommandError> {
-        self.execute(event).await
-    }
-}
-
-#[async_trait(?Send)]
-impl<T> OrderCompletedSubscriber for T
-where
-    T: CommandHandler<OrderCompletedEvent, (), Error = CommandError> + Send,
-{
-    async fn on_order_completed(&mut self, event: OrderCompletedEvent) -> Result<(), CommandError> {
-        self.execute(event).await
     }
 }

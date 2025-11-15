@@ -81,7 +81,7 @@ where
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    EB: EventBus + Send + 'static,
+    EB: EventBus + Send + Sync + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(
