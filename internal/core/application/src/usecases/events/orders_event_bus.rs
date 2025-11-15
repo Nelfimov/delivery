@@ -3,7 +3,7 @@ use domain::model::order::order_completed_event::OrderCompletedEvent;
 use domain::model::order::order_created_event::OrderCreatedEvent;
 use ports::events_producer_port::Events;
 use std::sync::Arc;
-use std::sync::Mutex;
+use tokio::sync::Mutex;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
@@ -69,27 +69,15 @@ impl EventBus for OrdersEventBus {
     async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
         match event {
             Events::OrderCreated(event) => {
-                for subscriber in &mut self.order_created_subscribers {
-                    match subscriber.lock() {
-                        Ok(mut s) => {
-                            s.on_order_created(event.clone()).await?;
-                        }
-                        Err(e) => {
-                            CommandError::ExecutionError(format!("mutex is ill: {}", e));
-                        }
-                    }
+                for subscriber in &self.order_created_subscribers {
+                    let mut s = subscriber.lock().await;
+                    s.on_order_created(event.clone()).await?;
                 }
             }
             Events::OrderCompleted(event) => {
-                for subscriber in &mut self.order_completed_subscribers {
-                    match subscriber.lock() {
-                        Ok(mut s) => {
-                            s.on_order_completed(event.clone()).await?;
-                        }
-                        Err(e) => {
-                            CommandError::ExecutionError(format!("mutex is ill: {}", e));
-                        }
-                    }
+                for subscriber in &self.order_completed_subscribers {
+                    let mut s = subscriber.lock().await;
+                    s.on_order_completed(event.clone()).await?;
                 }
             }
         };
