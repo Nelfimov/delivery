@@ -129,7 +129,8 @@ where
     ) -> Result<CreateOrderResponse, E> {
         let repo = self.state().order_repo();
         let geo_service = self.state().geo_service();
-        let mut handler = CreateOrderHandler::new(repo, geo_service);
+        let event_bus = self.state().order_event_bus();
+        let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
 
         let command = match CreateOrderCommand::new(Uuid::new_v4(), "Unknown street".into(), 5) {
             Ok(cmd) => cmd,
