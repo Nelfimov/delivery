@@ -662,6 +662,7 @@ dependencies = [
  "in_http",
  "in_kafka",
  "out_grpc_geo",
+ "out_kafka",
  "out_postgres",
  "ports",
  "serde",
