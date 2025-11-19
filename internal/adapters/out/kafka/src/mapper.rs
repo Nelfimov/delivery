@@ -1,3 +1,4 @@
+use domain::model::kernel::event::DomainEvent;
 use domain::model::order::order_completed_event::OrderCompletedEvent;
 use domain::model::order::order_created_event::OrderCreatedEvent;
 use prost_types::Timestamp;
