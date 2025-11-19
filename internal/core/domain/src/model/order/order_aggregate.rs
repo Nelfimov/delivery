@@ -4,6 +4,7 @@ use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::courier::courier_aggregate::CourierId;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
+use crate::model::order::order_events::OrderEvent;
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -59,6 +60,8 @@ pub struct Order {
     location: Location,
     volume: Volume,
     status: OrderStatus,
+
+    domain_events: Vec<OrderEvent>,
 }
 
 impl PartialEq for Order {
@@ -77,6 +80,7 @@ impl Order {
             volume,
             status: OrderStatus::Created,
             courier_id: None,
+            domain_events: Vec::new(),
         })
     }
 
@@ -93,6 +97,7 @@ impl Order {
             volume,
             status,
             courier_id,
+            domain_events: Vec::new(),
         }
     }
 
@@ -149,5 +154,9 @@ impl Order {
 
     pub fn status(&self) -> &OrderStatus {
         &self.status
+    }
+
+    pub fn raise_domain_event(&mut self, event: OrderEvent) {
+        self.domain_events.push(event);
     }
 }
