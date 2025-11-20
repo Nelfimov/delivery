@@ -70,6 +70,10 @@ impl OrderRepositoryPort for MockOrderRepository {
     fn raw(&mut self, _: String) -> Result<Vec<Order>, RepositoryError> {
         unimplemented!("not required for this test");
     }
+
+    fn publish_events(&self, _: &Order) -> Result<(), RepositoryError> {
+        todo!()
+    }
 }
 
 #[derive(Clone, Copy)]

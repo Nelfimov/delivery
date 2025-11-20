@@ -164,6 +164,10 @@ impl OrderRepositoryPort for TestOrderRepository {
     fn raw(&mut self, _query: String) -> Result<Vec<Order>, RepositoryError> {
         unimplemented!()
     }
+
+    fn publish_events(&self, _: &Order) -> Result<(), RepositoryError> {
+        todo!()
+    }
 }
 
 struct TestCourierRepository {
@@ -385,7 +389,10 @@ async fn handle_completes_assigned_orders() {
     );
 
     assert!(
-        !observed_events.lock().expect("event log poisoned").is_empty(),
+        !observed_events
+            .lock()
+            .expect("event log poisoned")
+            .is_empty(),
         "completing orders should emit events"
     );
 }
