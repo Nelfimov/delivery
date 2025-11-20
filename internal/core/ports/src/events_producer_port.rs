@@ -1,9 +1,7 @@
-use domain::model::order::order_completed_event::OrderCompletedEvent;
-use domain::model::order::order_created_event::OrderCreatedEvent;
+use domain::model::order::order_events::OrderEvent;
 
 pub enum Events {
-    OrderCreated(OrderCreatedEvent),
-    OrderCompleted(OrderCompletedEvent),
+    Order(OrderEvent)
 }
 
 pub trait EventsProducerPort {

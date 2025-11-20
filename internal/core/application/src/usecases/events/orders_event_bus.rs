@@ -1,6 +1,5 @@
 use async_trait::async_trait;
-use domain::model::order::order_completed_event::OrderCompletedEvent;
-use domain::model::order::order_created_event::OrderCreatedEvent;
+use domain::model::order::order_events::OrderEvent;
 use ports::events_producer_port::Events;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -68,16 +67,21 @@ impl EventBus for OrdersEventBus {
 
     async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
         match event {
-            Events::OrderCreated(event) => {
-                for subscriber in &self.order_created_subscribers {
-                    let mut s = subscriber.lock().await;
-                    s.on_order_created(event.clone()).await?;
-                }
-            }
-            Events::OrderCompleted(event) => {
-                for subscriber in &self.order_completed_subscribers {
-                    let mut s = subscriber.lock().await;
-                    s.on_order_completed(event.clone()).await?;
+            Events::Order(e) => {
+                match e {
+                    OrderEvent::Created { id, name, order_id } => {
+                        for subscriber in &self.order_created_subscribers {
+                            let mut s = subscriber.lock().await;
+                            s.on_order_created(e.clone()).await?;
+                        }
+
+                    }
+                    OrderEvent::Completed {id, name, courier_id, order_id} => {
+                        for subscriber in &self.order_completed_subscribers {
+                            let mut s = subscriber.lock().await;
+                            s.on_order_completed(e.clone()).await?;
+                        }
+                    }
                 }
             }
         };

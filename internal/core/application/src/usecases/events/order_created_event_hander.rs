@@ -1,4 +1,4 @@
-use domain::model::order::order_created_event::OrderCreatedEvent;
+use domain::model::order::order_events::OrderEvent;
 use ports::events_producer_port::Events;
 use ports::events_producer_port::EventsProducerPort;
 
@@ -21,14 +21,14 @@ where
     }
 }
 
-impl<EP> EventHandler<OrderCreatedEvent, ()> for OrderCreatedEventHandler<EP>
+impl<EP> EventHandler<OrderEvent, ()> for OrderCreatedEventHandler<EP>
 where
     EP: EventsProducerPort + Send + Sync,
 {
     type Error = CommandError;
 
-    async fn execute(&mut self, event: OrderCreatedEvent) -> Result<(), Self::Error> {
-        self.producer.publish(Events::OrderCreated(event));
+    async fn execute(&mut self, event: OrderEvent) -> Result<(), Self::Error> {
+        self.producer.publish(Events::Order(event));
         Ok(())
     }
 }

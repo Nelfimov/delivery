@@ -1,6 +1,5 @@
-use domain::model::kernel::event::DomainEvent;
-use domain::model::order::order_completed_event::OrderCompletedEvent;
-use domain::model::order::order_created_event::OrderCreatedEvent;
+use domain::model::kernel::event::EventId;
+use domain::model::order::order_events::OrderEvent;
 use ports::events_producer_port::Events;
 use ports::events_producer_port::EventsProducerPort;
 use std::sync::Arc;
@@ -14,7 +13,7 @@ use crate::usecases::events::orders_event_bus::OrdersEventBus;
 
 #[derive(Clone, Default)]
 struct RecordingProducer {
-    payloads: Arc<Mutex<Vec<String>>>,
+    payloads: Arc<Mutex<Vec<EventId>>>,
 }
 
 impl EventsProducerPort for RecordingProducer {
@@ -23,8 +22,12 @@ impl EventsProducerPort for RecordingProducer {
         tokio::spawn(async move {
             let mut guard = payloads.lock().await;
             guard.push(match e {
-                Events::OrderCreated(event) => event.id(),
-                Events::OrderCompleted(event) => event.id(),
+                Events::Order(event) => {
+                    match event {
+                        OrderEvent::Created { id,..} => id,
+                        OrderEvent::Completed {id, ..} => id
+                    }
+                }
             });
         });
     }
@@ -45,7 +48,7 @@ async fn fans_out_created_and_completed_events() {
     let order_id = Uuid::new_v4();
     let courier_id = Uuid::new_v4();
 
-    bus.commit(Events::OrderCreated(OrderCreatedEvent::new(order_id)))
+    bus.commit(Events::Order(OrderEvent::Created { id: (), name: (), order_id: () }) OrderCreated(OrderCreatedEvent::new(order_id)))
         .await
         .unwrap();
 

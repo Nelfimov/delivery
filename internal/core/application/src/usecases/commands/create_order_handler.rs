@@ -1,6 +1,4 @@
 use domain::model::order::order_aggregate::Order;
-use domain::model::order::order_created_event::OrderCreatedEvent;
-use ports::events_producer_port::Events;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 
@@ -55,10 +53,6 @@ where
         self.order_repository
             .add(&order)
             .map_err(|e| CommandError::ExecutionError(e.to_string()))?;
-
-        self.event_bus
-            .commit(Events::OrderCreated(OrderCreatedEvent::new(order.id().0)))
-            .await?;
 
         Ok(())
     }
