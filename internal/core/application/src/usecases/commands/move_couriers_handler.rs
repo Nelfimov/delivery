@@ -1,5 +1,7 @@
+use domain::model::order::order_events::OrderEvent;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::errors::RepositoryError;
+use ports::events_producer_port::Events;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
 use std::fmt::Debug;
@@ -40,8 +42,10 @@ where
 
     #[instrument(skip_all)]
     async fn execute(&mut self, _command: MoveCouriersCommand) -> Result<(), Self::Error> {
-        self.uow
+        let events = self
+            .uow
             .transaction(|tx| {
+                let mut pending_events = Vec::new();
                 let mut assigned_orders = {
                     let mut order_repo = tx.order_repo();
                     order_repo.get_all_assigned()?
@@ -49,7 +53,7 @@ where
 
                 if assigned_orders.is_empty() {
                     debug!("no assigned orders found");
-                    return Ok(());
+                    return Ok(pending_events);
                 }
 
                 for order in &mut assigned_orders {
@@ -92,6 +96,7 @@ where
                         order
                             .complete()
                             .map_err(|err| RepositoryError::from(err.to_string()))?;
+                        pending_events.extend(order.take_domain_events());
                     }
 
                     {
@@ -105,9 +110,28 @@ where
                     }
                 }
                 debug!("finished moving courier and adjusting order");
-                Ok(())
+                Ok(pending_events)
             })
             .map_err(|e| CommandError::ExecutionError(e.to_string()))?;
+
+        self.publish_order_events(events).await?;
+
+        Ok(())
+    }
+}
+
+impl<UOW, EB> MoveCouriersHandler<UOW, EB>
+where
+    UOW: UnitOfWorkPort + Debug,
+    EB: EventBus,
+{
+    async fn publish_order_events(
+        &mut self,
+        events: Vec<OrderEvent>,
+    ) -> Result<(), CommandError> {
+        for event in events {
+            self.event_bus.commit(Events::Order(event)).await?;
+        }
 
         Ok(())
     }

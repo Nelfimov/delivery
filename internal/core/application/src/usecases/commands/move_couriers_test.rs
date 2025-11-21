@@ -164,10 +164,6 @@ impl OrderRepositoryPort for TestOrderRepository {
     fn raw(&mut self, _query: String) -> Result<Vec<Order>, RepositoryError> {
         unimplemented!()
     }
-
-    fn publish_events(&self, _: &Order) -> Result<(), RepositoryError> {
-        todo!()
-    }
 }
 
 struct TestCourierRepository {

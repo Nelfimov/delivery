@@ -1,4 +1,5 @@
 use domain::model::order::order_aggregate::Order;
+use ports::events_producer_port::Events;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 
@@ -47,13 +48,30 @@ where
             .get_location(command.street())
             .await
             .map_err(|e| CommandError::ExecutionError(e.to_string()))?;
-        let order = Order::new(command.order_id(), location, command.volume())
+        let mut order = Order::new(command.order_id(), location, command.volume())
             .map_err(|e| CommandError::ExecutionError(e.to_string()))?;
 
         self.order_repository
             .add(&order)
             .map_err(|e| CommandError::ExecutionError(e.to_string()))?;
 
+        self.publish_order_events(&mut order).await?;
+
+        Ok(())
+    }
+}
+
+impl<OR, GS, EB> CreateOrderHandler<OR, GS, EB>
+where
+    OR: OrderRepositoryPort,
+    GS: GeoServicePort,
+    EB: EventBus,
+{
+    async fn publish_order_events(&mut self, order: &mut Order) -> Result<(), CommandError> {
+        let events = order.take_domain_events();
+        for event in events {
+            self.event_bus.commit(Events::Order(event)).await?;
+        }
         Ok(())
     }
 }
