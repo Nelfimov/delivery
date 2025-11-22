@@ -113,6 +113,10 @@ impl OrderRepositoryPort for TestOrderRepository {
             .map(StoredOrder::to_order)
             .collect())
     }
+
+    fn publish_events(&self, _: &Order) -> Result<(), RepositoryError> {
+        todo!()
+    }
 }
 
 struct TestCourierRepository {

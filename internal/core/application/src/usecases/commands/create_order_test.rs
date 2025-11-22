@@ -4,7 +4,6 @@ use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
 use ports::errors::GeoClientError;
 use ports::errors::RepositoryError;
-use ports::events_producer_port::Events;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use std::sync::Arc;
@@ -70,6 +69,10 @@ impl OrderRepositoryPort for MockOrderRepository {
 
     fn raw(&mut self, _: String) -> Result<Vec<Order>, RepositoryError> {
         unimplemented!("not required for this test");
+    }
+
+    fn publish_events(&self, _: &Order) -> Result<(), RepositoryError> {
+        todo!()
     }
 }
 
@@ -156,3 +159,4 @@ async fn handle_propagates_repository_error() {
     let result = handler.execute(command).await;
     assert!(result.is_err(), "handler must surface repository failures");
 }
+use ports::events_producer_port::Events;

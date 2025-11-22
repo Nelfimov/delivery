@@ -167,10 +167,6 @@ impl Order {
         &self.domain_events
     }
 
-    pub fn take_domain_events(&mut self) -> Vec<OrderEvent> {
-        std::mem::take(&mut self.domain_events)
-    }
-
     pub fn clear_domain_events(&mut self) {
         self.domain_events.clear();
     }
