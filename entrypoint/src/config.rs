@@ -32,6 +32,7 @@ fn default_kafka_changed_topic() -> String {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct Config {
     pub db_host: String,
     pub db_port: u16,

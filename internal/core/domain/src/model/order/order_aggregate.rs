@@ -4,6 +4,7 @@ use crate::errors::domain_model_errors::DomainModelError;
 use crate::model::courier::courier_aggregate::CourierId;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
+use crate::model::order::order_events::OrderEvent;
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -59,6 +60,8 @@ pub struct Order {
     location: Location,
     volume: Volume,
     status: OrderStatus,
+
+    domain_events: Vec<OrderEvent>,
 }
 
 impl PartialEq for Order {
@@ -71,13 +74,16 @@ impl Eq for Order {}
 
 impl Order {
     pub fn new(id: OrderId, location: Location, volume: Volume) -> Result<Self, DomainModelError> {
-        Ok(Self {
+        let mut order = Self {
             id,
             location,
             volume,
             status: OrderStatus::Created,
             courier_id: None,
-        })
+            domain_events: Vec::new(),
+        };
+        order.raise_domain_event(OrderEvent::created(id));
+        Ok(order)
     }
 
     pub fn restore(
@@ -93,6 +99,7 @@ impl Order {
             volume,
             status,
             courier_id,
+            domain_events: Vec::new(),
         }
     }
 
@@ -115,19 +122,20 @@ impl Order {
     }
 
     pub fn complete(&mut self) -> Result<(), DomainModelError> {
-        if self.courier_id.is_none() {
-            return Err(DomainModelError::UnmetRequirement(
+        match self.courier_id {
+            None => Err(DomainModelError::UnmetRequirement(
                 "courier_id is not present".to_owned(),
-            ));
-        }
-        match self.status {
-            OrderStatus::Completed => Err(DomainModelError::UnmetRequirement(
-                "status is already set as Completed".to_string(),
             )),
-            _ => {
-                self.status = OrderStatus::Completed;
-                Ok(())
-            }
+            Some(courier_id) => match self.status {
+                OrderStatus::Completed => Err(DomainModelError::UnmetRequirement(
+                    "status is already set as Completed".to_string(),
+                )),
+                _ => {
+                    self.status = OrderStatus::Completed;
+                    self.raise_domain_event(OrderEvent::completed(self.id, courier_id));
+                    Ok(())
+                }
+            },
         }
     }
 
@@ -149,5 +157,17 @@ impl Order {
 
     pub fn status(&self) -> &OrderStatus {
         &self.status
+    }
+
+    pub fn raise_domain_event(&mut self, event: OrderEvent) {
+        self.domain_events.push(event);
+    }
+
+    pub fn get_domain_events(&self) -> &Vec<OrderEvent> {
+        &self.domain_events
+    }
+
+    pub fn clear_domain_events(&mut self) {
+        self.domain_events.clear();
     }
 }

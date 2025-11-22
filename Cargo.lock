@@ -662,6 +662,7 @@ dependencies = [
  "in_http",
  "in_kafka",
  "out_grpc_geo",
+ "out_kafka",
  "out_postgres",
  "ports",
  "serde",
@@ -1325,6 +1326,7 @@ dependencies = [
  "rdkafka",
  "serde",
  "serde_json",
+ "tokio",
  "tracing",
  "uuid",
 ]
@@ -1743,6 +1745,23 @@ dependencies = [
  "tonic",
  "tonic-prost",
  "tonic-prost-build",
+]
+
+[[package]]
+name = "out_kafka"
+version = "0.1.0"
+dependencies = [
+ "application",
+ "domain",
+ "ports",
+ "prost",
+ "prost-build",
+ "prost-types",
+ "rdkafka",
+ "serde",
+ "serde_json",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
