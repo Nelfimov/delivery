@@ -80,7 +80,6 @@ async fn main() {
         &config.kafka_consumer_group,
         consumer_order_repo,
         consumer_geo_service,
-        orders_event_bus,
     );
     let _consumer_handle = tokio::spawn(async move {
         consumer.consume().await;

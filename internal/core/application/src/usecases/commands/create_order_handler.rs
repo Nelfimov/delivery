@@ -4,40 +4,34 @@ use ports::order_repository_port::OrderRepositoryPort;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
-use crate::usecases::EventBus;
 use crate::usecases::commands::create_order_command::CreateOrderCommand;
 
-pub struct CreateOrderHandler<OR, GS, EB>
+pub struct CreateOrderHandler<OR, GS>
 where
     OR: OrderRepositoryPort,
     GS: GeoServicePort,
-    EB: EventBus,
 {
     order_repository: OR,
     geo_service: GS,
-    event_bus: EB,
 }
 
-impl<OR, GS, EB> CreateOrderHandler<OR, GS, EB>
+impl<OR, GS> CreateOrderHandler<OR, GS>
 where
     OR: OrderRepositoryPort,
     GS: GeoServicePort,
-    EB: EventBus,
 {
-    pub fn new(order_repository: OR, geo_service: GS, event_bus: EB) -> Self {
+    pub fn new(order_repository: OR, geo_service: GS) -> Self {
         Self {
             order_repository,
             geo_service,
-            event_bus,
         }
     }
 }
 
-impl<OR, GS, EB> CommandHandler<CreateOrderCommand, ()> for CreateOrderHandler<OR, GS, EB>
+impl<OR, GS> CommandHandler<CreateOrderCommand, ()> for CreateOrderHandler<OR, GS>
 where
     OR: OrderRepositoryPort,
     GS: GeoServicePort,
-    EB: EventBus,
 {
     type Error = CommandError;
 

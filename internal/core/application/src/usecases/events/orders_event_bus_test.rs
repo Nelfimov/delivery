@@ -1,4 +1,6 @@
+use domain::model::courier::courier_aggregate::CourierId;
 use domain::model::kernel::event::EventId;
+use domain::model::order::order_aggregate::OrderId;
 use domain::model::order::order_events::OrderEvent;
 use ports::events_producer_port::Events;
 use ports::events_producer_port::EventsProducerPort;
@@ -22,12 +24,10 @@ impl EventsProducerPort for RecordingProducer {
         tokio::spawn(async move {
             let mut guard = payloads.lock().await;
             guard.push(match e {
-                Events::Order(event) => {
-                    match event {
-                        OrderEvent::Created { id,..} => id,
-                        OrderEvent::Completed {id, ..} => id
-                    }
-                }
+                Events::Order(event) => match event {
+                    OrderEvent::Created { id, .. } => id,
+                    OrderEvent::Completed { id, .. } => id,
+                },
             });
         });
     }
@@ -45,18 +45,16 @@ async fn fans_out_created_and_completed_events() {
     bus.register_order_created(handler_one);
     bus.register_order_completed(handler_two);
 
-    let order_id = Uuid::new_v4();
-    let courier_id = Uuid::new_v4();
+    let order_id = OrderId::new(Uuid::new_v4());
+    let courier_id = CourierId(Uuid::new_v4());
 
-    bus.commit(Events::Order(OrderEvent::Created { id: (), name: (), order_id: () }) OrderCreated(OrderCreatedEvent::new(order_id)))
+    bus.commit(Events::Order(OrderEvent::created(order_id)))
         .await
         .unwrap();
 
-    bus.commit(Events::OrderCompleted(OrderCompletedEvent::new(
-        order_id, courier_id,
-    )))
-    .await
-    .unwrap();
+    bus.commit(Events::Order(OrderEvent::completed(order_id, courier_id)))
+        .await
+        .unwrap();
 
     tokio::time::sleep(std::time::Duration::from_millis(50)).await;
 

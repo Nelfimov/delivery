@@ -1,7 +1,6 @@
 use application::errors::command_errors::CommandError;
 use application::usecases::EventBus;
-use application::usecases::OrderCompletedSubscriber;
-use application::usecases::OrderCreatedSubscriber;
+use application::usecases::Handler;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
 use domain::model::order::order_aggregate::Order;
@@ -186,18 +185,12 @@ impl<EB> EventBus for AsyncShared<EB>
 where
     EB: EventBus,
 {
-    fn register_order_created<S>(&mut self, subscriber: S)
-    where
-        S: OrderCreatedSubscriber + 'static,
-    {
+    fn register_order_created(&mut self, subscriber: impl Handler + 'static) {
         let mut guard = Arc::clone(&self.inner).blocking_lock_owned();
         guard.register_order_created(subscriber);
     }
 
-    fn register_order_completed<S>(&mut self, subscriber: S)
-    where
-        S: OrderCompletedSubscriber + 'static,
-    {
+    fn register_order_completed(&mut self, subscriber: impl Handler + 'static) {
         let mut guard = Arc::clone(&self.inner).blocking_lock_owned();
         guard.register_order_completed(subscriber);
     }

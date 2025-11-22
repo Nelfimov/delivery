@@ -3,6 +3,7 @@ use crate::model::kernel::event::DomainEvent;
 use crate::model::kernel::event::EventId;
 use crate::model::order::order_aggregate::OrderId;
 
+#[derive(Clone)]
 pub enum OrderEvent {
     Created {
         id: EventId,

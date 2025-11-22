@@ -9,32 +9,27 @@ use tracing::warn;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
-use crate::usecases::EventBus;
 use crate::usecases::commands::move_couriers_command::MoveCouriersCommand;
 
-pub struct MoveCouriersHandler<UOW, EB>
+pub struct MoveCouriersHandler<UOW>
 where
     UOW: UnitOfWorkPort + Debug,
-    EB: EventBus,
 {
     uow: UOW,
-    event_bus: EB,
 }
 
-impl<UOW, EB> MoveCouriersHandler<UOW, EB>
+impl<UOW> MoveCouriersHandler<UOW>
 where
     UOW: UnitOfWorkPort + Debug,
-    EB: EventBus,
 {
-    pub fn new(uow: UOW, event_bus: EB) -> Self {
-        Self { uow, event_bus }
+    pub fn new(uow: UOW) -> Self {
+        Self { uow }
     }
 }
 
-impl<UOW, EB> CommandHandler<MoveCouriersCommand, ()> for MoveCouriersHandler<UOW, EB>
+impl<UOW> CommandHandler<MoveCouriersCommand, ()> for MoveCouriersHandler<UOW>
 where
     UOW: UnitOfWorkPort + Debug,
-    EB: EventBus,
 {
     type Error = CommandError;
 

@@ -24,8 +24,7 @@ use uuid::Uuid;
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
 use crate::usecases::EventBus;
-use crate::usecases::OrderCompletedSubscriber;
-use crate::usecases::OrderCreatedSubscriber;
+use crate::usecases::Handler;
 use crate::usecases::commands::move_couriers_command::MoveCouriersCommand;
 use crate::usecases::commands::move_couriers_handler::MoveCouriersHandler;
 
@@ -40,17 +39,9 @@ impl RecordingEventBus {
 }
 
 impl EventBus for RecordingEventBus {
-    fn register_order_created<S>(&mut self, _subscriber: S)
-    where
-        S: OrderCreatedSubscriber + 'static,
-    {
-    }
+    fn register_order_created(&mut self, _subscriber: impl Handler + Send + Sync + 'static) {}
 
-    fn register_order_completed<S>(&mut self, _subscriber: S)
-    where
-        S: OrderCompletedSubscriber + 'static,
-    {
-    }
+    fn register_order_completed(&mut self, _subscriber: impl Handler + Send + Sync + 'static) {}
 
     async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
         let mut events = self.events.lock().expect("event log poisoned");
@@ -163,10 +154,6 @@ impl OrderRepositoryPort for TestOrderRepository {
 
     fn raw(&mut self, _query: String) -> Result<Vec<Order>, RepositoryError> {
         unimplemented!()
-    }
-
-    fn publish_events(&self, _: &Order) -> Result<(), RepositoryError> {
-        todo!()
     }
 }
 

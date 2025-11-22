@@ -13,8 +13,7 @@ use uuid::Uuid;
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
 use crate::usecases::EventBus;
-use crate::usecases::OrderCompletedSubscriber;
-use crate::usecases::OrderCreatedSubscriber;
+use crate::usecases::Handler;
 
 use super::create_order_command::CreateOrderCommand;
 use super::create_order_handler::CreateOrderHandler;
@@ -70,10 +69,6 @@ impl OrderRepositoryPort for MockOrderRepository {
     fn raw(&mut self, _: String) -> Result<Vec<Order>, RepositoryError> {
         unimplemented!("not required for this test");
     }
-
-    fn publish_events(&self, _: &Order) -> Result<(), RepositoryError> {
-        todo!()
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -99,17 +94,9 @@ impl RecordingEventBus {
 }
 
 impl EventBus for RecordingEventBus {
-    fn register_order_created<S>(&mut self, _subscriber: S)
-    where
-        S: OrderCreatedSubscriber + 'static,
-    {
-    }
+    fn register_order_created(&mut self, _subscriber: impl Handler + Send + Sync + 'static) {}
 
-    fn register_order_completed<S>(&mut self, _subscriber: S)
-    where
-        S: OrderCompletedSubscriber + 'static,
-    {
-    }
+    fn register_order_completed(&mut self, _subscriber: impl Handler + Send + Sync + 'static) {}
 
     async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
         let mut events = self.events.lock().expect("event log poisoned");
@@ -126,7 +113,7 @@ async fn handle_persists_order_via_repository() {
     let observed_events = Arc::new(Mutex::new(Vec::new()));
     let event_bus = RecordingEventBus::new(observed_events.clone());
 
-    let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
+    let mut handler = CreateOrderHandler::new(repo, geo_service);
     let command = CreateOrderCommand::new(Uuid::new_v4(), "Tverskaya street 1".to_string(), 10)
         .expect("command should be valid");
 
@@ -152,7 +139,7 @@ async fn handle_propagates_repository_error() {
     let geo_service = GeoServiceMock;
     let event_bus = RecordingEventBus::new(Arc::new(Mutex::new(Vec::new())));
 
-    let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
+    let mut handler = CreateOrderHandler::new(repo, geo_service);
     let command = CreateOrderCommand::new(Uuid::new_v4(), "Nevsky prospect 10".to_string(), 5)
         .expect("command should be valid");
 
