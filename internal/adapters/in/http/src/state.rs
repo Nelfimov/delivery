@@ -1,5 +1,3 @@
-use application::errors::command_errors::CommandError;
-use application::usecases::Handler;
 use application::usecases::events::event_bus::EventBus;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
@@ -8,7 +6,6 @@ use domain::model::order::order_aggregate::OrderId;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::courier_repository_port::GetAllCouriersResponse;
 use ports::errors::RepositoryError;
-use ports::events_producer_port::Events;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
@@ -107,13 +104,13 @@ where
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    EB: EventBus + Send + 'static,
+    EB: EventBus + 'static,
 {
     courier_repo: Shared<CR>,
     order_repo: Shared<OR>,
     uow: Arc<Mutex<UOW>>,
     geo_service: GS,
-    order_event_bus: AsyncShared<EB>,
+    order_event_bus: EB,
 }
 
 impl<CR, OR, UOW, GS, EB> AppState<CR, OR, UOW, GS, EB>
@@ -122,7 +119,7 @@ where
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    EB: EventBus + Send + 'static,
+    EB: EventBus + 'static,
 {
     pub fn new(
         courier_repo: CR,
@@ -136,7 +133,7 @@ where
             order_repo: Shared::new(order_repo),
             uow: Arc::new(Mutex::new(uow)),
             geo_service,
-            order_event_bus: AsyncShared::new(order_event_bus),
+            order_event_bus,
         }
     }
 
@@ -156,7 +153,7 @@ where
         self.geo_service.clone()
     }
 
-    pub fn order_event_bus(&self) -> AsyncShared<EB> {
+    pub fn order_event_bus(&self) -> EB {
         self.order_event_bus.clone()
     }
 }
@@ -178,25 +175,5 @@ impl<T> AsyncShared<T> {
         Self {
             inner: Arc::new(AsyncMutex::new(inner)),
         }
-    }
-}
-
-impl<EB> EventBus for AsyncShared<EB>
-where
-    EB: EventBus,
-{
-    fn register_order_created(&mut self, subscriber: impl Handler + 'static) {
-        let mut guard = Arc::clone(&self.inner).blocking_lock_owned();
-        guard.register_order_created(subscriber);
-    }
-
-    fn register_order_completed(&mut self, subscriber: impl Handler + 'static) {
-        let mut guard = Arc::clone(&self.inner).blocking_lock_owned();
-        guard.register_order_completed(subscriber);
-    }
-
-    async fn commit(&mut self, e: Events) -> Result<(), CommandError> {
-        let mut guard = Arc::clone(&self.inner).lock_owned().await;
-        guard.commit(e).await
     }
 }

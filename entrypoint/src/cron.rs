@@ -22,7 +22,7 @@ pub async fn start_crons<EB>(
     _event_bus: AsyncShared<EB>,
 ) -> JobScheduler
 where
-    EB: EventBus + Send + 'static,
+    EB: EventBus + 'static,
 {
     let scheduler = JobScheduler::new()
         .await

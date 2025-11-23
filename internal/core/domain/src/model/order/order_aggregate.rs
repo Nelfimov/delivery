@@ -167,8 +167,11 @@ impl Order {
         &self.domain_events
     }
 
-    pub fn pop_domain_events(self) -> Vec<OrderEvent> {
-        self.domain_events
+    pub fn pop_domain_events(&mut self) -> Vec<OrderEvent> {
+        let events = self.get_domain_events().clone();
+        self.clear_domain_events();
+
+        events
     }
 
     pub fn clear_domain_events(&mut self) {

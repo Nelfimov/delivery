@@ -39,7 +39,7 @@ where
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    EB: EventBus + Send + 'static,
+    EB: EventBus + 'static,
 {
     state: Arc<AppState<CR, OR, UOW, GS, EB>>,
 }
@@ -50,7 +50,7 @@ where
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    EB: EventBus + Send + 'static,
+    EB: EventBus + 'static,
 {
     pub fn new(state: Arc<AppState<CR, OR, UOW, GS, EB>>) -> Self {
         Self { state }
@@ -68,7 +68,7 @@ where
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    EB: EventBus + Send + 'static,
+    EB: EventBus + 'static,
     E: Send + Sync + Debug + 'static,
 {
 }
@@ -81,7 +81,7 @@ where
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    EB: EventBus + Send + Sync + 'static,
+    EB: EventBus + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(
@@ -130,7 +130,7 @@ where
         let repo = self.state().order_repo();
         let geo_service = self.state().geo_service();
         let event_bus = self.state().order_event_bus();
-        let mut handler = CreateOrderHandler::new(repo, geo_service);
+        let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
 
         let command = match CreateOrderCommand::new(Uuid::new_v4(), "Unknown street".into(), 5) {
             Ok(cmd) => cmd,

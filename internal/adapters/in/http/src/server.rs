@@ -40,7 +40,7 @@ where
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
-    EB: EventBus + Send + Sync + 'static,
+    EB: EventBus + 'static,
 {
     let shared_state = Arc::new(state);
     let handler = Arc::new(ServerImpl::new(shared_state));

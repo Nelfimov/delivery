@@ -28,6 +28,7 @@ use crate::usecases::commands::move_couriers_command::MoveCouriersCommand;
 use crate::usecases::commands::move_couriers_handler::MoveCouriersHandler;
 use crate::usecases::events::event_bus::EventBus;
 
+#[derive(Clone)]
 struct RecordingEventBus {
     events: Arc<Mutex<Vec<Events>>>,
 }
@@ -43,7 +44,7 @@ impl EventBus for RecordingEventBus {
 
     fn register_order_completed(&mut self, _subscriber: impl Handler + 'static) {}
 
-    async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
+    async fn commit(&self, event: Events) -> Result<(), CommandError> {
         let mut events = self.events.lock().expect("event log poisoned");
         events.push(event);
         Ok(())

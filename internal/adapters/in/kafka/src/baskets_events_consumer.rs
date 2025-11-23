@@ -1,6 +1,9 @@
+use crate::mapper::BasketEventPayload;
+use crate::shared::Shared;
 use application::usecases::CommandHandler;
 use application::usecases::commands::create_order_command::CreateOrderCommand;
 use application::usecases::commands::create_order_handler::CreateOrderHandler;
+use application::usecases::events::event_bus::EventBus;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use rdkafka::ClientConfig;
@@ -16,27 +19,33 @@ use tracing::info;
 use tracing::span;
 use tracing::warn;
 
-use crate::mapper::BasketEventPayload;
-use crate::shared::Shared;
-
 static TOPIC: [&str; 1] = ["baskets.events"];
 
-pub struct BasketEventsConsumer<OR, GS>
+pub struct BasketEventsConsumer<OR, GS, EB>
 where
     OR: OrderRepositoryPort,
     GS: GeoServicePort + Clone,
+    EB: EventBus,
 {
     consumer: StreamConsumer,
     order_repo: Shared<OR>,
     geo_service: GS,
+    event_bus: EB,
 }
 
-impl<OR, GS> BasketEventsConsumer<OR, GS>
+impl<OR, GS, EB> BasketEventsConsumer<OR, GS, EB>
 where
     OR: OrderRepositoryPort,
     GS: GeoServicePort + Clone,
+    EB: EventBus,
 {
-    pub fn new(brokers: &str, group_id: &str, order_repo: Shared<OR>, geo_service: GS) -> Self {
+    pub fn new(
+        brokers: &str,
+        group_id: &str,
+        order_repo: Shared<OR>,
+        geo_service: GS,
+        event_bus: EB,
+    ) -> Self {
         let mut config = ClientConfig::new();
 
         let consumer: StreamConsumer = config
@@ -60,6 +69,7 @@ where
             consumer,
             order_repo,
             geo_service,
+            event_bus,
         }
     }
 
@@ -131,8 +141,11 @@ where
                         }
                     };
 
-                    let mut handler =
-                        CreateOrderHandler::new(self.order_repo.clone(), self.geo_service.clone());
+                    let mut handler = CreateOrderHandler::new(
+                        self.order_repo.clone(),
+                        self.geo_service.clone(),
+                        self.event_bus.clone(),
+                    );
 
                     if let Err(err) = handler.execute(command).await {
                         warn!(?err, "failed to handle BasketConfirmedIntegrationEvent");

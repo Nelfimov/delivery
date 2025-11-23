@@ -27,7 +27,7 @@ impl<EP> Handler for OrderCompletedEventHandler<EP>
 where
     EP: EventsProducerPort + Send + Sync,
 {
-    async fn execute(&mut self, event: OrderEvent) -> Result<(), CommandError> {
+    async fn execute(&self, event: OrderEvent) -> Result<(), CommandError> {
         self.producer.publish(Events::Order(event));
         Ok(())
     }

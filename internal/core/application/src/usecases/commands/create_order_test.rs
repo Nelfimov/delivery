@@ -83,6 +83,7 @@ impl GeoServicePort for GeoServiceMock {
     }
 }
 
+#[derive(Clone)]
 struct RecordingEventBus {
     events: Arc<Mutex<Vec<Events>>>,
 }
@@ -98,7 +99,7 @@ impl EventBus for RecordingEventBus {
 
     fn register_order_completed(&mut self, _subscriber: impl Handler + 'static) {}
 
-    async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
+    async fn commit(&self, event: Events) -> Result<(), CommandError> {
         let mut events = self.events.lock().expect("event log poisoned");
         events.push(event);
         Ok(())
@@ -111,9 +112,9 @@ async fn handle_persists_order_via_repository() {
     let repo = MockOrderRepository::new(stored_id.clone());
     let geo_service = GeoServiceMock;
     let observed_events = Arc::new(Mutex::new(Vec::new()));
-    let _event_bus = RecordingEventBus::new(observed_events.clone());
+    let event_bus = RecordingEventBus::new(observed_events.clone());
 
-    let mut handler = CreateOrderHandler::new(repo, geo_service);
+    let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
     let command = CreateOrderCommand::new(Uuid::new_v4(), "Tverskaya street 1".to_string(), 10)
         .expect("command should be valid");
 
@@ -137,9 +138,9 @@ async fn handle_propagates_repository_error() {
     let stored_id = Arc::new(Mutex::new(None));
     let repo = MockOrderRepository::new_failing(stored_id);
     let geo_service = GeoServiceMock;
-    let _event_bus = RecordingEventBus::new(Arc::new(Mutex::new(Vec::new())));
+    let event_bus = RecordingEventBus::new(Arc::new(Mutex::new(Vec::new())));
 
-    let mut handler = CreateOrderHandler::new(repo, geo_service);
+    let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
     let command = CreateOrderCommand::new(Uuid::new_v4(), "Nevsky prospect 10".to_string(), 5)
         .expect("command should be valid");
 
