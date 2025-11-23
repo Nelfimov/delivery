@@ -94,6 +94,7 @@ impl RecordingEventBus {
     }
 }
 
+#[async_trait]
 impl EventBus for RecordingEventBus {
     fn register_order_created(&mut self, _subscriber: impl Handler + 'static) {}
 

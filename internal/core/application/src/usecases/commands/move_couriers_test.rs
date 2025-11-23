@@ -4,6 +4,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use async_trait::async_trait;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
 use domain::model::courier::courier_aggregate::CourierName;
@@ -39,6 +40,7 @@ impl RecordingEventBus {
     }
 }
 
+#[async_trait]
 impl EventBus for RecordingEventBus {
     fn register_order_created(&mut self, _subscriber: impl Handler + 'static) {}
 

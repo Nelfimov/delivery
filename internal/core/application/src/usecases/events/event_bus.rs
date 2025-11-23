@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use domain::model::order::order_events::OrderEvent;
 use ports::events_producer_port::Events;
 use std::sync::Arc;
@@ -5,7 +6,7 @@ use std::sync::Arc;
 use crate::errors::command_errors::CommandError;
 use crate::usecases::Handler;
 
-#[allow(async_fn_in_trait)]
+#[async_trait]
 pub trait EventBus: Clone + Send + Sync {
     fn register_order_created(&mut self, subscriber: impl Handler + 'static);
     fn register_order_completed(&mut self, subscriber: impl Handler + 'static);
@@ -27,6 +28,7 @@ impl EventBusImpl {
     }
 }
 
+#[async_trait]
 impl EventBus for EventBusImpl {
     fn register_order_created(&mut self, subscriber: impl Handler + 'static) {
         self.order_created_subscribers.push(Arc::new(subscriber));

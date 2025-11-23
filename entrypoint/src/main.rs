@@ -7,7 +7,6 @@ use application::usecases::events::order_completed_event_handler::OrderCompleted
 use application::usecases::events::order_created_event_hander::OrderCreatedEventHandler;
 use in_http::server::start_server;
 use in_http::state::AppState;
-use in_http::state::AsyncShared;
 use in_kafka::baskets_events_consumer::BasketEventsConsumer;
 use in_kafka::shared::Shared;
 use out_grpc_geo::geo_service::GeoService;
@@ -59,19 +58,18 @@ async fn main() {
         OrdersEventsProducer::new(&config.kafka_host, &config.kafka_consumer_group);
     event_bus.register_order_created(OrderCreatedEventHandler::new(orders_created_producer));
     event_bus.register_order_completed(OrderCompletedEventHandler::new(orders_completed_producer));
-    let orders_event_bus = AsyncShared::new(event_bus);
-    let consumer_event_bus = orders_event_bus.clone();
+
+    let cron_event_bus = event_bus.clone();
 
     let app_state = AppState::new(
         courier_repo,
         order_repo,
         uow,
         geo_service.clone(),
-        consumer_event_bus,
+        event_bus,
     );
 
-    let cron_event_bus = orders_event_bus.clone();
-    let mut scheduler = start_crons(pool.clone(), cron_event_bus).await;
+    let mut scheduler = start_crons(pool.clone(), cron_event_bus.clone()).await;
 
     let consumer_order_repo = Shared::new(OrderRepository::new(pool.clone()));
     let consumer_geo_service = geo_service;
@@ -80,6 +78,7 @@ async fn main() {
         &config.kafka_consumer_group,
         consumer_order_repo,
         consumer_geo_service,
+        cron_event_bus,
     );
     let _consumer_handle = tokio::spawn(async move {
         consumer.consume().await;

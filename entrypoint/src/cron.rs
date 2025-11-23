@@ -4,7 +4,6 @@ use application::usecases::commands::assign_order_handler::AssignOrderHandler;
 use application::usecases::commands::move_couriers_command::MoveCouriersCommand;
 use application::usecases::commands::move_couriers_handler::MoveCouriersHandler;
 use application::usecases::events::event_bus::EventBus;
-use in_http::state::AsyncShared;
 use out_postgres::ConnectionManager;
 use out_postgres::PgConnection;
 use out_postgres::Pool;
@@ -19,7 +18,7 @@ use tokio_cron_scheduler::JobScheduler;
 
 pub async fn start_crons<EB>(
     pool: Pool<ConnectionManager<PgConnection>>,
-    _event_bus: AsyncShared<EB>,
+    _event_bus: EB,
 ) -> JobScheduler
 where
     EB: EventBus + 'static,
