@@ -39,9 +39,9 @@ impl RecordingEventBus {
 }
 
 impl EventBus for RecordingEventBus {
-    fn register_order_created(&mut self, _subscriber: impl Handler + Send + Sync + 'static) {}
+    fn register_order_created(&mut self, _subscriber: impl Handler + 'static) {}
 
-    fn register_order_completed(&mut self, _subscriber: impl Handler + Send + Sync + 'static) {}
+    fn register_order_completed(&mut self, _subscriber: impl Handler + 'static) {}
 
     async fn commit(&mut self, event: Events) -> Result<(), CommandError> {
         let mut events = self.events.lock().expect("event log poisoned");
@@ -350,12 +350,12 @@ async fn handle_completes_assigned_orders() {
     let orders_state = Rc::new(RefCell::new(orders));
     let couriers_state = Rc::new(RefCell::new(couriers));
     let observed_events = Arc::new(Mutex::new(Vec::new()));
-    let event_bus = RecordingEventBus::new(observed_events.clone());
+    let _event_bus = RecordingEventBus::new(observed_events.clone());
 
-    let mut handler = MoveCouriersHandler::new(
-        TestUnitOfWork::from_state(Rc::clone(&orders_state), Rc::clone(&couriers_state)),
-        event_bus,
-    );
+    let mut handler = MoveCouriersHandler::new(TestUnitOfWork::from_state(
+        Rc::clone(&orders_state),
+        Rc::clone(&couriers_state),
+    ));
     let command = MoveCouriersCommand::new().expect("command should be valid");
 
     handler

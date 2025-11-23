@@ -23,12 +23,12 @@ impl OrdersEventBus {
 }
 
 impl EventBus for OrdersEventBus {
-    fn register_order_created(&mut self, subscriber: impl Handler + Send + Sync + 'static) {
+    fn register_order_created(&mut self, subscriber: impl Handler + 'static) {
         self.order_created_subscribers
             .push(Arc::new(Mutex::new(subscriber)));
     }
 
-    fn register_order_completed(&mut self, subscriber: impl Handler + Send + Sync + 'static) {
+    fn register_order_completed(&mut self, subscriber: impl Handler + 'static) {
         self.order_completed_subscribers
             .push(Arc::new(Mutex::new(subscriber)));
     }
