@@ -54,6 +54,7 @@ impl OrderId {
     }
 }
 
+#[derive(Clone)]
 pub struct Order {
     id: OrderId,
     courier_id: Option<CourierId>,

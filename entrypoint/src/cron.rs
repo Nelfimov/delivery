@@ -16,20 +16,18 @@ use tokio::task;
 use tokio_cron_scheduler::Job;
 use tokio_cron_scheduler::JobScheduler;
 
-pub async fn start_crons<EB>(
+pub async fn start_crons(
     pool: Pool<ConnectionManager<PgConnection>>,
-    _event_bus: EB,
-) -> JobScheduler
-where
-    EB: EventBus + 'static,
-{
+    event_bus: impl EventBus + 'static,
+) -> JobScheduler {
     let scheduler = JobScheduler::new()
         .await
         .expect("failed to initialize cron scheduler");
 
-    let move_couriers_handler = Arc::new(Mutex::new(MoveCouriersHandler::new(UnitOfWork::new(
-        pool.clone(),
-    ))));
+    let move_couriers_handler = Arc::new(Mutex::new(MoveCouriersHandler::new(
+        UnitOfWork::new(pool.clone()),
+        event_bus,
+    )));
     let move_couriers_handler_job = Arc::clone(&move_couriers_handler);
     let runtime_handle = Handle::current();
     let move_job_handle = runtime_handle.clone();

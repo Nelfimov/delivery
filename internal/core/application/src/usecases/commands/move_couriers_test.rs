@@ -353,12 +353,12 @@ async fn handle_completes_assigned_orders() {
     let orders_state = Rc::new(RefCell::new(orders));
     let couriers_state = Rc::new(RefCell::new(couriers));
     let observed_events = Arc::new(Mutex::new(Vec::new()));
-    let _event_bus = RecordingEventBus::new(observed_events.clone());
+    let event_bus = RecordingEventBus::new(observed_events.clone());
 
-    let mut handler = MoveCouriersHandler::new(TestUnitOfWork::from_state(
-        Rc::clone(&orders_state),
-        Rc::clone(&couriers_state),
-    ));
+    let mut handler = MoveCouriersHandler::new(
+        TestUnitOfWork::from_state(Rc::clone(&orders_state), Rc::clone(&couriers_state)),
+        event_bus,
+    );
     let command = MoveCouriersCommand::new().expect("command should be valid");
 
     handler
