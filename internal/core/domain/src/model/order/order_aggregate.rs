@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use uuid::Uuid;
 
 use crate::errors::domain_model_errors::DomainModelError;
@@ -5,7 +6,6 @@ use crate::model::courier::courier_aggregate::CourierId;
 use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
 use crate::model::order::order_events::OrderEvent;
-use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum OrderStatus {
@@ -165,6 +165,10 @@ impl Order {
 
     pub fn get_domain_events(&self) -> &Vec<OrderEvent> {
         &self.domain_events
+    }
+
+    pub fn pop_domain_events(self) -> Vec<OrderEvent> {
+        self.domain_events
     }
 
     pub fn clear_domain_events(&mut self) {
