@@ -12,8 +12,8 @@ use uuid::Uuid;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
-use crate::usecases::EventBus;
 use crate::usecases::Handler;
+use crate::usecases::events::event_bus::EventBus;
 
 use super::create_order_command::CreateOrderCommand;
 use super::create_order_handler::CreateOrderHandler;

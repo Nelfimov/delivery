@@ -1,10 +1,10 @@
 mod config;
 mod cron;
 
-use application::usecases::EventBus;
+use application::usecases::events::event_bus::EventBus;
+use application::usecases::events::event_bus::EventBusImpl;
 use application::usecases::events::order_completed_event_handler::OrderCompletedEventHandler;
 use application::usecases::events::order_created_event_hander::OrderCreatedEventHandler;
-use application::usecases::events::orders_event_bus::OrdersEventBus;
 use in_http::server::start_server;
 use in_http::state::AppState;
 use in_http::state::AsyncShared;
@@ -52,7 +52,7 @@ async fn main() {
     let order_repo = OrderRepository::new(pool.clone());
     let uow = UnitOfWork::new(pool.clone());
 
-    let mut event_bus = OrdersEventBus::new();
+    let mut event_bus = EventBusImpl::new();
     let orders_created_producer =
         OrdersEventsProducer::new(&config.kafka_host, &config.kafka_consumer_group);
     let orders_completed_producer =

@@ -8,10 +8,10 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::usecases::EventBus;
+use crate::usecases::events::event_bus::EventBus;
+use crate::usecases::events::event_bus::EventBusImpl;
 use crate::usecases::events::order_completed_event_handler::OrderCompletedEventHandler;
 use crate::usecases::events::order_created_event_hander::OrderCreatedEventHandler;
-use crate::usecases::events::orders_event_bus::OrdersEventBus;
 
 #[derive(Clone, Default)]
 struct RecordingProducer {
@@ -41,7 +41,7 @@ async fn fans_out_created_and_completed_events() {
     let handler_one = OrderCreatedEventHandler::new(producer_one.clone());
     let handler_two = OrderCompletedEventHandler::new(producer_two.clone());
 
-    let mut bus = OrdersEventBus::new();
+    let mut bus = EventBusImpl::new();
     bus.register_order_created(handler_one);
     bus.register_order_completed(handler_two);
 

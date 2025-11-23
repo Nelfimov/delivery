@@ -23,10 +23,10 @@ use uuid::Uuid;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
-use crate::usecases::EventBus;
 use crate::usecases::Handler;
 use crate::usecases::commands::move_couriers_command::MoveCouriersCommand;
 use crate::usecases::commands::move_couriers_handler::MoveCouriersHandler;
+use crate::usecases::events::event_bus::EventBus;
 
 struct RecordingEventBus {
     events: Arc<Mutex<Vec<Events>>>,

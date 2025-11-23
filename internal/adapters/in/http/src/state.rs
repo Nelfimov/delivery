@@ -1,6 +1,6 @@
 use application::errors::command_errors::CommandError;
-use application::usecases::EventBus;
 use application::usecases::Handler;
+use application::usecases::events::event_bus::EventBus;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
 use domain::model::order::order_aggregate::Order;

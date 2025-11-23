@@ -1,9 +1,9 @@
 use application::usecases::CommandHandler;
-use application::usecases::EventBus;
 use application::usecases::commands::assign_order_command::AssignOrderCommand;
 use application::usecases::commands::assign_order_handler::AssignOrderHandler;
 use application::usecases::commands::move_couriers_command::MoveCouriersCommand;
 use application::usecases::commands::move_couriers_handler::MoveCouriersHandler;
+use application::usecases::events::event_bus::EventBus;
 use in_http::state::AsyncShared;
 use out_postgres::ConnectionManager;
 use out_postgres::PgConnection;

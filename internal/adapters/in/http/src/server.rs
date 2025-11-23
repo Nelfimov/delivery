@@ -1,4 +1,4 @@
-use application::usecases::EventBus;
+use application::usecases::events::event_bus::EventBus;
 use ports::courier_repository_port::CourierRepositoryPort;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;

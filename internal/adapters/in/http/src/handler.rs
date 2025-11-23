@@ -1,11 +1,11 @@
 use application::errors::command_errors::CommandError;
 use application::errors::query_errors::QueryError;
 use application::usecases::CommandHandler;
-use application::usecases::EventBus;
 use application::usecases::commands::create_courier_command::CreateCourierCommand;
 use application::usecases::commands::create_courier_handler::CreateCourierHandler;
 use application::usecases::commands::create_order_command::CreateOrderCommand;
 use application::usecases::commands::create_order_handler::CreateOrderHandler;
+use application::usecases::events::event_bus::EventBus;
 use application::usecases::queries::get_all_couriers_handler::GetAllCouriersHandler;
 use application::usecases::queries::get_all_couriers_query::GetAllCouriers;
 use application::usecases::queries::get_all_incomplete_orders_handler::GetAllIncompleteOrdersHandler;
