@@ -1,11 +1,16 @@
 mod config;
 mod cron;
 
+use application::usecases::events::event_bus::EventBus;
+use application::usecases::events::event_bus::EventBusImpl;
+use application::usecases::events::order_completed_event_handler::OrderCompletedEventHandler;
+use application::usecases::events::order_created_event_hander::OrderCreatedEventHandler;
 use in_http::server::start_server;
 use in_http::state::AppState;
 use in_kafka::baskets_events_consumer::BasketEventsConsumer;
 use in_kafka::shared::Shared;
 use out_grpc_geo::geo_service::GeoService;
+use out_kafka::orders_events_producer::OrdersEventsProducer;
 use out_postgres::connection::PgConnectionOptions;
 use out_postgres::connection::establish_connection;
 use out_postgres::courier::courier_repository::CourierRepository;
@@ -46,9 +51,25 @@ async fn main() {
     let order_repo = OrderRepository::new(pool.clone());
     let uow = UnitOfWork::new(pool.clone());
 
-    let app_state = AppState::new(courier_repo, order_repo, uow, geo_service.clone());
+    let mut event_bus = EventBusImpl::new();
+    let orders_created_producer =
+        OrdersEventsProducer::new(&config.kafka_host, &config.kafka_consumer_group);
+    let orders_completed_producer =
+        OrdersEventsProducer::new(&config.kafka_host, &config.kafka_consumer_group);
+    event_bus.register_order_created(OrderCreatedEventHandler::new(orders_created_producer));
+    event_bus.register_order_completed(OrderCompletedEventHandler::new(orders_completed_producer));
 
-    let mut scheduler = start_crons(pool.clone()).await;
+    let cron_event_bus = event_bus.clone();
+
+    let app_state = AppState::new(
+        courier_repo,
+        order_repo,
+        uow,
+        geo_service.clone(),
+        event_bus,
+    );
+
+    let mut scheduler = start_crons(pool.clone(), cron_event_bus.clone()).await;
 
     let consumer_order_repo = Shared::new(OrderRepository::new(pool.clone()));
     let consumer_geo_service = geo_service;
@@ -57,6 +78,7 @@ async fn main() {
         &config.kafka_consumer_group,
         consumer_order_repo,
         consumer_geo_service,
+        cron_event_bus,
     );
     let _consumer_handle = tokio::spawn(async move {
         consumer.consume().await;

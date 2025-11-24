@@ -1,3 +1,4 @@
+use diesel::PgConnection;
 use diesel::insert_into;
 use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
@@ -5,19 +6,18 @@ use diesel::r2d2::Pool;
 use diesel::r2d2::PooledConnection;
 use diesel::sql_query;
 use diesel::update;
-use diesel::PgConnection;
 use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
 use domain::model::order::order_aggregate::OrderStatus;
 use ports::errors::RepositoryError;
 use ports::order_repository_port::OrderRepositoryPort;
+use std::ops::DerefMut;
+use std::ptr::NonNull;
 
 use crate::errors::postgres_error::PostgresError;
 
 use super::order_dto::OrderDto;
 use super::order_schema::orders::dsl::*;
-use std::ops::DerefMut;
-use std::ptr::NonNull;
 
 pub struct OrderRepository {
     pool: Pool<ConnectionManager<PgConnection>>,

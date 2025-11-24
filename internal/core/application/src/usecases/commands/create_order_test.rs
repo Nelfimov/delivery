@@ -1,16 +1,19 @@
+use async_trait::async_trait;
 use domain::model::kernel::location::Location;
 use domain::model::order::order_aggregate::Order;
 use domain::model::order::order_aggregate::OrderId;
 use ports::errors::GeoClientError;
 use ports::errors::RepositoryError;
-use async_trait::async_trait;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use std::sync::Arc;
 use std::sync::Mutex;
 use uuid::Uuid;
 
+use crate::errors::command_errors::CommandError;
 use crate::usecases::CommandHandler;
+use crate::usecases::Handler;
+use crate::usecases::events::event_bus::EventBus;
 
 use super::create_order_command::CreateOrderCommand;
 use super::create_order_handler::CreateOrderHandler;
@@ -80,13 +83,39 @@ impl GeoServicePort for GeoServiceMock {
     }
 }
 
+#[derive(Clone)]
+struct RecordingEventBus {
+    events: Arc<Mutex<Vec<Events>>>,
+}
+
+impl RecordingEventBus {
+    fn new(events: Arc<Mutex<Vec<Events>>>) -> Self {
+        Self { events }
+    }
+}
+
+#[async_trait]
+impl EventBus for RecordingEventBus {
+    fn register_order_created(&mut self, _subscriber: impl Handler + 'static) {}
+
+    fn register_order_completed(&mut self, _subscriber: impl Handler + 'static) {}
+
+    async fn commit(&self, event: Events) -> Result<(), CommandError> {
+        let mut events = self.events.lock().expect("event log poisoned");
+        events.push(event);
+        Ok(())
+    }
+}
+
 #[tokio::test]
 async fn handle_persists_order_via_repository() {
     let stored_id = Arc::new(Mutex::new(None));
     let repo = MockOrderRepository::new(stored_id.clone());
     let geo_service = GeoServiceMock;
+    let observed_events = Arc::new(Mutex::new(Vec::new()));
+    let event_bus = RecordingEventBus::new(observed_events.clone());
 
-    let mut handler = CreateOrderHandler::new(repo, geo_service);
+    let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
     let command = CreateOrderCommand::new(Uuid::new_v4(), "Tverskaya street 1".to_string(), 10)
         .expect("command should be valid");
 
@@ -100,6 +129,9 @@ async fn handle_persists_order_via_repository() {
         observed.is_some(),
         "order id should be recorded in repository"
     );
+
+    let events = observed_events.lock().expect("event log poisoned");
+    assert_eq!(events.len(), 1, "order creation should emit event");
 }
 
 #[tokio::test]
@@ -107,11 +139,13 @@ async fn handle_propagates_repository_error() {
     let stored_id = Arc::new(Mutex::new(None));
     let repo = MockOrderRepository::new_failing(stored_id);
     let geo_service = GeoServiceMock;
+    let event_bus = RecordingEventBus::new(Arc::new(Mutex::new(Vec::new())));
 
-    let mut handler = CreateOrderHandler::new(repo, geo_service);
+    let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
     let command = CreateOrderCommand::new(Uuid::new_v4(), "Nevsky prospect 10".to_string(), 5)
         .expect("command should be valid");
 
     let result = handler.execute(command).await;
     assert!(result.is_err(), "handler must surface repository failures");
 }
+use ports::events_producer_port::Events;

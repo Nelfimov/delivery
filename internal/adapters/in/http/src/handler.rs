@@ -5,6 +5,7 @@ use application::usecases::commands::create_courier_command::CreateCourierComman
 use application::usecases::commands::create_courier_handler::CreateCourierHandler;
 use application::usecases::commands::create_order_command::CreateOrderCommand;
 use application::usecases::commands::create_order_handler::CreateOrderHandler;
+use application::usecases::events::event_bus::EventBus;
 use application::usecases::queries::get_all_couriers_handler::GetAllCouriersHandler;
 use application::usecases::queries::get_all_couriers_query::GetAllCouriers;
 use application::usecases::queries::get_all_incomplete_orders_handler::GetAllIncompleteOrdersHandler;
@@ -32,51 +33,55 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-pub struct ServerImpl<CR, OR, UOW, GS>
+pub struct ServerImpl<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    EB: EventBus + 'static,
 {
-    state: Arc<AppState<CR, OR, UOW, GS>>,
+    state: Arc<AppState<CR, OR, UOW, GS, EB>>,
 }
 
-impl<CR, OR, UOW, GS> ServerImpl<CR, OR, UOW, GS>
+impl<CR, OR, UOW, GS, EB> ServerImpl<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    EB: EventBus + 'static,
 {
-    pub fn new(state: Arc<AppState<CR, OR, UOW, GS>>) -> Self {
+    pub fn new(state: Arc<AppState<CR, OR, UOW, GS, EB>>) -> Self {
         Self { state }
     }
 
-    fn state(&self) -> &AppState<CR, OR, UOW, GS> {
+    fn state(&self) -> &AppState<CR, OR, UOW, GS, EB> {
         self.state.as_ref()
     }
 }
 
 #[async_trait]
-impl<CR, OR, UOW, GS, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW, GS>
+impl<CR, OR, UOW, GS, EB, E> ErrorHandler<E> for ServerImpl<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    EB: EventBus + 'static,
     E: Send + Sync + Debug + 'static,
 {
 }
 
 #[allow(unused_variables)]
 #[async_trait]
-impl<CR, OR, UOW, GS, E> DefaultApi<E> for ServerImpl<CR, OR, UOW, GS>
+impl<CR, OR, UOW, GS, E, EB> DefaultApi<E> for ServerImpl<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    EB: EventBus + 'static,
     E: Debug + Send + Sync + 'static,
 {
     async fn create_courier(
@@ -124,7 +129,8 @@ where
     ) -> Result<CreateOrderResponse, E> {
         let repo = self.state().order_repo();
         let geo_service = self.state().geo_service();
-        let mut handler = CreateOrderHandler::new(repo, geo_service);
+        let event_bus = self.state().order_event_bus();
+        let mut handler = CreateOrderHandler::new(repo, geo_service, event_bus);
 
         let command = match CreateOrderCommand::new(Uuid::new_v4(), "Unknown street".into(), 5) {
             Ok(cmd) => cmd,

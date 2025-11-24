@@ -1,6 +1,4 @@
-use std::sync::Arc;
-use std::sync::Mutex;
-
+use application::usecases::events::event_bus::EventBus;
 use domain::model::courier::courier_aggregate::Courier;
 use domain::model::courier::courier_aggregate::CourierId;
 use domain::model::order::order_aggregate::Order;
@@ -11,6 +9,9 @@ use ports::errors::RepositoryError;
 use ports::geo_service_port::GeoServicePort;
 use ports::order_repository_port::OrderRepositoryPort;
 use ports::unit_of_work_port::UnitOfWorkPort;
+use std::sync::Arc;
+use std::sync::Mutex;
+use tokio::sync::Mutex as AsyncMutex;
 
 pub struct Shared<T> {
     inner: Arc<Mutex<T>>,
@@ -97,32 +98,42 @@ where
     }
 }
 
-pub struct AppState<CR, OR, UOW, GS>
+pub struct AppState<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    EB: EventBus + 'static,
 {
     courier_repo: Shared<CR>,
     order_repo: Shared<OR>,
     uow: Arc<Mutex<UOW>>,
     geo_service: GS,
+    order_event_bus: EB,
 }
 
-impl<CR, OR, UOW, GS> AppState<CR, OR, UOW, GS>
+impl<CR, OR, UOW, GS, EB> AppState<CR, OR, UOW, GS, EB>
 where
     CR: CourierRepositoryPort + Send + 'static,
     OR: OrderRepositoryPort + Send + 'static,
     UOW: UnitOfWorkPort + Send + 'static,
     GS: GeoServicePort + Clone + Send + Sync + 'static,
+    EB: EventBus + 'static,
 {
-    pub fn new(courier_repo: CR, order_repo: OR, uow: UOW, geo_service: GS) -> Self {
+    pub fn new(
+        courier_repo: CR,
+        order_repo: OR,
+        uow: UOW,
+        geo_service: GS,
+        order_event_bus: EB,
+    ) -> Self {
         Self {
             courier_repo: Shared::new(courier_repo),
             order_repo: Shared::new(order_repo),
             uow: Arc::new(Mutex::new(uow)),
             geo_service,
+            order_event_bus,
         }
     }
 
@@ -140,5 +151,29 @@ where
 
     pub fn geo_service(&self) -> GS {
         self.geo_service.clone()
+    }
+
+    pub fn order_event_bus(&self) -> EB {
+        self.order_event_bus.clone()
+    }
+}
+
+pub struct AsyncShared<T> {
+    inner: Arc<AsyncMutex<T>>,
+}
+
+impl<T> Clone for AsyncShared<T> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
+
+impl<T> AsyncShared<T> {
+    pub fn new(inner: T) -> Self {
+        Self {
+            inner: Arc::new(AsyncMutex::new(inner)),
+        }
     }
 }
