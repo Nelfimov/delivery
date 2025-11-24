@@ -3,4 +3,5 @@ pub mod errors;
 pub mod events_producer_port;
 pub mod geo_service_port;
 pub mod order_repository_port;
+pub mod outbox_repository;
 pub mod unit_of_work_port;

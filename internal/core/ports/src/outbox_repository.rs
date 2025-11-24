@@ -1,0 +1,17 @@
+use std::time::SystemTime;
+
+use crate::errors::RepositoryError;
+
+pub struct Message {
+    pub id: String,
+    pub name: String,
+    // TODO: use byte
+    pub payload: String,
+    pub occured_at: SystemTime,
+    pub processed_at: SystemTime,
+}
+
+pub trait OutboxRepositoryPort {
+    fn update(&mut self, message: &Message) -> Result<(), RepositoryError>;
+    fn get_not_published_messages(&mut self) -> Result<Vec<Message>, RepositoryError>;
+}
