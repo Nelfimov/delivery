@@ -37,3 +37,15 @@ impl From<OutboxDto> for Message {
         }
     }
 }
+
+impl From<&OutboxDto> for Message {
+    fn from(row: &OutboxDto) -> Self {
+        Self {
+            id: row.id,
+            name: row.name.clone(),
+            payload: row.payload.clone(),
+            occured_at: row.occured_at,
+            processed_at: row.processed_at,
+        }
+    }
+}
