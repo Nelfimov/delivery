@@ -1,15 +1,6 @@
-use std::time::SystemTime;
+use domain::model::kernel::message::Message;
 
 use crate::errors::RepositoryError;
-
-pub struct Message {
-    pub id: String,
-    pub name: String,
-    // TODO: use byte
-    pub payload: String,
-    pub occured_at: SystemTime,
-    pub processed_at: SystemTime,
-}
 
 pub trait OutboxRepositoryPort {
     fn update(&mut self, message: &Message) -> Result<(), RepositoryError>;

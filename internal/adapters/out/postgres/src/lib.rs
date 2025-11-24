@@ -2,6 +2,7 @@ pub mod connection;
 pub mod courier;
 pub mod errors;
 pub mod order;
+pub mod outbox;
 pub mod storage_place;
 pub mod unit_of_work;
 pub use diesel::PgConnection;
