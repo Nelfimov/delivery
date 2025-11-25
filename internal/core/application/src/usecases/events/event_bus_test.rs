@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::usecases::events::event_bus::EventBus;
 use crate::usecases::events::event_bus::EventBusImpl;
 use crate::usecases::events::order_completed_event_handler::OrderCompletedEventHandler;
-use crate::usecases::events::order_created_event_hander::OrderCreatedEventHandler;
+use crate::usecases::events::order_created_event_handler::OrderCreatedEventHandler;
 
 #[derive(Clone, Default)]
 struct RecordingProducer {
