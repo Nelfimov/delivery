@@ -14,6 +14,7 @@ use crate::outbox::outbox_dto::OutboxDto;
 
 use super::outbox_schema::outbox::dsl::*;
 
+#[derive(Clone)]
 pub struct OutboxRepository {
     pool: Pool<ConnectionManager<PgConnection>>,
 }

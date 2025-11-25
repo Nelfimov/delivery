@@ -1,34 +1,39 @@
 use async_trait::async_trait;
+use domain::model::kernel::message::Message;
 use domain::model::order::order_events::OrderEvent;
-use ports::events_producer_port::Events;
-use ports::events_producer_port::EventsProducerPort;
+use ports::outbox_repository::OutboxRepositoryPort;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::Handler;
 
-pub struct OrderCompletedEventHandler<EP>
+pub struct OrderCompletedEventHandler<OR>
 where
-    EP: EventsProducerPort + Send + Sync,
+    OR: OutboxRepositoryPort + Send + Sync,
 {
-    producer: EP,
+    outbox_repo: OR,
 }
 
-impl<EP> OrderCompletedEventHandler<EP>
+impl<OR> OrderCompletedEventHandler<OR>
 where
-    EP: EventsProducerPort + Send + Sync,
+    OR: OutboxRepositoryPort + Send + Sync,
 {
-    pub fn new(producer: EP) -> Self {
-        Self { producer }
+    pub fn new(outbox_repo: OR) -> Self {
+        Self { outbox_repo }
     }
 }
 
 #[async_trait]
-impl<EP> Handler for OrderCompletedEventHandler<EP>
+impl<OR> Handler for OrderCompletedEventHandler<OR>
 where
-    EP: EventsProducerPort + Send + Sync,
+    OR: OutboxRepositoryPort + Send + Sync,
 {
-    async fn execute(&self, event: OrderEvent) -> Result<(), CommandError> {
-        self.producer.publish(Events::Order(event));
-        Ok(())
+    async fn execute(&mut self, event: OrderEvent) -> Result<(), CommandError> {
+        match event {
+            OrderEvent::Completed { name, .. } => {
+                let message = Message::new(name, "hello".to_string());
+                self.outbox_repo.add(&message).map_err(CommandError::from)
+            }
+            _ => Ok(()),
+        }
     }
 }

@@ -58,8 +58,8 @@ async fn main() {
         OrdersEventsProducer::new(&config.kafka_host, &config.kafka_consumer_group);
     let orders_completed_producer =
         OrdersEventsProducer::new(&config.kafka_host, &config.kafka_consumer_group);
-    event_bus.register_order_created(OrderCreatedEventHandler::new(orders_created_producer));
-    event_bus.register_order_completed(OrderCompletedEventHandler::new(orders_completed_producer));
+    event_bus.register_order_created(OrderCreatedEventHandler::new(outbox_repo.clone()));
+    event_bus.register_order_completed(OrderCompletedEventHandler::new(outbox_repo.clone()));
 
     let app_state = AppState::new(
         courier_repo,

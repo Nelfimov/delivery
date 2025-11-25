@@ -16,5 +16,5 @@ pub trait CommandHandler<C, R> {
 
 #[async_trait]
 pub trait Handler: Send + Sync {
-    async fn execute(&self, event: OrderEvent) -> Result<(), CommandError>;
+    async fn execute(&mut self, event: OrderEvent) -> Result<(), CommandError>;
 }

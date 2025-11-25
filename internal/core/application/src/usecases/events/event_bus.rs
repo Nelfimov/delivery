@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use domain::model::order::order_events::OrderEvent;
 use ports::events_producer_port::Events;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::Handler;
@@ -15,8 +16,8 @@ pub trait EventBus: Clone + Send + Sync {
 
 #[derive(Default, Clone)]
 pub struct EventBusImpl {
-    order_created_subscribers: Vec<Arc<dyn Handler + Send + Sync>>,
-    order_completed_subscribers: Vec<Arc<dyn Handler + Send + Sync>>,
+    order_created_subscribers: Vec<Arc<Mutex<dyn Handler + Send + Sync>>>,
+    order_completed_subscribers: Vec<Arc<Mutex<dyn Handler + Send + Sync>>>,
 }
 
 impl EventBusImpl {
@@ -31,11 +32,13 @@ impl EventBusImpl {
 #[async_trait]
 impl EventBus for EventBusImpl {
     fn register_order_created(&mut self, subscriber: impl Handler + 'static) {
-        self.order_created_subscribers.push(Arc::new(subscriber));
+        self.order_created_subscribers
+            .push(Arc::new(Mutex::new(subscriber)));
     }
 
     fn register_order_completed(&mut self, subscriber: impl Handler + 'static) {
-        self.order_completed_subscribers.push(Arc::new(subscriber));
+        self.order_completed_subscribers
+            .push(Arc::new(Mutex::new(subscriber)));
     }
 
     async fn commit(&self, event: Events) -> Result<(), CommandError> {
@@ -43,12 +46,14 @@ impl EventBus for EventBusImpl {
             Events::Order(order_event) => match &order_event {
                 OrderEvent::Created { .. } => {
                     for subscriber in &self.order_created_subscribers {
-                        subscriber.execute(order_event.clone()).await?;
+                        let mut s = subscriber.lock().await;
+                        s.execute(order_event.clone()).await?;
                     }
                 }
                 OrderEvent::Completed { .. } => {
                     for subscriber in &self.order_completed_subscribers {
-                        subscriber.execute(order_event.clone()).await?;
+                        let mut s = subscriber.lock().await;
+                        s.execute(order_event.clone()).await?;
                     }
                 }
             },
