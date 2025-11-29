@@ -29,8 +29,13 @@ where
 {
     async fn execute(&mut self, event: OrderEvent) -> Result<(), CommandError> {
         match event {
-            OrderEvent::Completed { 0: e, .. } => {
-                let message = Message::new(e.name, "hello".to_string());
+            OrderEvent::Completed { 0: e } => {
+                let message = Message::new(
+                    e.name.clone(),
+                    serde_json::to_string(&e).map_err(|_| {
+                        CommandError::ExecutionError("could not serialize event".to_string())
+                    })?,
+                );
                 self.outbox_repo.add(&message).map_err(CommandError::from)
             }
             _ => Ok(()),
