@@ -6,6 +6,8 @@ use ports::unit_of_work_port::UnitOfWorkPort;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::signal;
+use tower_http::cors::Any;
+use tower_http::cors::CorsLayer;
 
 use crate::handler::ServerImpl;
 use crate::state::AppState;
@@ -50,7 +52,9 @@ where
         (),
     >(handler);
 
-    // let app = app.layer(...);
+    let cors = CorsLayer::new().allow_origin(Any);
+
+    let app = app.layer(cors);
 
     let listener = TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app)
