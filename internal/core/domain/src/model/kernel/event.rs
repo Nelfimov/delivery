@@ -1,6 +1,8 @@
+use serde::Deserialize;
+use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EventId(pub Uuid);
 
 impl Default for EventId {

@@ -1,3 +1,5 @@
+use serde::Deserialize;
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::errors::domain_model_errors::DomainModelError;
@@ -6,7 +8,7 @@ use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
 use crate::model::order::order_aggregate::OrderId;
 
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct CourierId(pub Uuid);
 
 #[derive(Clone, Debug)]

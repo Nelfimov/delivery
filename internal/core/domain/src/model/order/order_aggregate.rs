@@ -1,3 +1,5 @@
+use serde::Deserialize;
+use serde::Serialize;
 use std::fmt::Display;
 use uuid::Uuid;
 
@@ -41,7 +43,7 @@ impl Display for OrderStatus {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct OrderId(pub Uuid);
 
 impl OrderId {

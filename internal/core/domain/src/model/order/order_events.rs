@@ -1,9 +1,12 @@
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::model::courier::courier_aggregate::CourierId;
 use crate::model::kernel::event::DomainEvent;
 use crate::model::kernel::event::EventId;
 use crate::model::order::order_aggregate::OrderId;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum OrderEvent {
     Created {
         id: EventId,
@@ -38,7 +41,7 @@ impl OrderEvent {
     pub fn created(order_id: OrderId) -> Self {
         Self::Created {
             id: EventId::default(),
-            name: "order_created".to_string(),
+            name: "created".to_string(),
             order_id,
         }
     }
@@ -46,7 +49,7 @@ impl OrderEvent {
     pub fn completed(order_id: OrderId, courier_id: CourierId) -> Self {
         Self::Completed {
             id: EventId::default(),
-            name: "order_completed".to_string(),
+            name: "completed".to_string(),
             order_id,
             courier_id,
         }
