@@ -153,7 +153,7 @@ impl Courier {
                 self.location = Location::new(x, self.location.y())?
             }
             if self.location.x() > location.x() {
-                let preliminary_action = self.location.x() - speed;
+                let preliminary_action = self.location.x().saturating_sub(speed);
                 let x = if preliminary_action < location.x() {
                     location.x()
                 } else {
@@ -172,7 +172,7 @@ impl Courier {
                 self.location = Location::new(self.location.x(), y)?
             }
             if self.location.y() > location.y() {
-                let preliminary_action = self.location.y() - speed;
+                let preliminary_action = self.location.y().saturating_sub(speed);
                 let y = if preliminary_action < location.y() {
                     location.y()
                 } else {
