@@ -54,9 +54,9 @@ async fn main() {
     let uow = UnitOfWork::new(pool.clone());
 
     let mut event_bus = EventBusImpl::new();
-    let orders_created_producer =
+    let _orders_created_producer =
         OrdersEventsProducer::new(&config.kafka_host, &config.kafka_consumer_group);
-    let orders_completed_producer =
+    let _orders_completed_producer =
         OrdersEventsProducer::new(&config.kafka_host, &config.kafka_consumer_group);
     event_bus.register_order_created(OrderCreatedEventHandler::new(outbox_repo.clone()));
     event_bus.register_order_completed(OrderCompletedEventHandler::new(outbox_repo.clone()));

@@ -68,7 +68,7 @@ impl OutboxRepositoryPort for OutboxRepository {
 
         let rows: Vec<OutboxDto> = outbox
             .filter(processed_at.is_null())
-            .limit(10)
+            .limit(20)
             .load(&mut conn)
             .map_err(PostgresError::from)
             .map_err(RepositoryError::from)?;
