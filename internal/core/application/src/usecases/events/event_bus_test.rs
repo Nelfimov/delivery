@@ -4,6 +4,7 @@ use domain::model::order::order_aggregate::OrderId;
 use domain::model::order::order_events::OrderEvent;
 use ports::events_producer_port::Events;
 use ports::events_producer_port::EventsProducerPort;
+use ports::outbox_repository::OutboxRepositoryPort;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -25,11 +26,39 @@ impl EventsProducerPort for RecordingProducer {
             let mut guard = payloads.lock().await;
             guard.push(match e {
                 Events::Order(event) => match event {
-                    OrderEvent::Created { id, .. } => id,
-                    OrderEvent::Completed { id, .. } => id,
+                    OrderEvent::Created { 0: e } => e.id,
+                    OrderEvent::Completed { 0: e } => e.id,
                 },
             });
         });
+    }
+}
+
+impl OutboxRepositoryPort for RecordingProducer {
+    fn add(
+        &mut self,
+        message: &domain::model::kernel::message::Message,
+    ) -> Result<(), ports::errors::RepositoryError> {
+        let payloads = self.payloads.clone();
+
+        tokio::spawn(async move {
+            let mut guard = payloads.lock().await;
+            guard.push(EventId(message.id));
+        });
+        Ok(())
+    }
+
+    fn update(
+        &mut self,
+        _message: &domain::model::kernel::message::Message,
+    ) -> Result<(), ports::errors::RepositoryError> {
+        todo!()
+    }
+
+    fn get_not_published_messages(
+        &mut self,
+    ) -> Result<Vec<domain::model::kernel::message::Message>, ports::errors::RepositoryError> {
+        todo!()
     }
 }
 

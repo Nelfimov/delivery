@@ -29,8 +29,8 @@ where
 {
     async fn execute(&mut self, event: OrderEvent) -> Result<(), CommandError> {
         match event {
-            OrderEvent::Created { id, name, order_id } => {
-                let message = Message::new(name, "hello".to_string());
+            OrderEvent::Created { 0: e } => {
+                let message = Message::new(e.name, "hello".to_string());
                 self.outbox_repo.add(&message).map_err(CommandError::from)
             }
             _ => Ok(()),

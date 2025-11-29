@@ -14,15 +14,15 @@ impl From<OrderEvent> for Events {
     }
 }
 
-impl TryFrom<Message> for Events {
+impl TryFrom<&Message> for Events {
     type Error = Box<dyn Error>;
 
-    fn try_from(v: Message) -> Result<Self, Self::Error> {
+    fn try_from(v: &Message) -> Result<Self, Self::Error> {
         let event = match v.name.as_str() {
             "created" => serde_json::from_str(&v.payload)?,
             "completed" => serde_json::from_str(&v.payload)?,
             _ => {
-                return Err(Box::new(UnsupportedEventName(v.name)));
+                return Err(Box::new(UnsupportedEventName(v.name.clone())));
             }
         };
 

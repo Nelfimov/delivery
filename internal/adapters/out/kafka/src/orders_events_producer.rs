@@ -37,23 +37,18 @@ impl<'a> EventsProducerPort for OrdersEventsProducer {
     fn publish(&self, e: Events) {
         let payload = match e {
             Events::Order(event) => match event {
-                OrderEvent::Created { id, name, order_id } => OrderCreatedIntegrationEvent {
-                    event_id: id.0.to_string(),
-                    event_type: name,
+                OrderEvent::Created { 0: e } => OrderCreatedIntegrationEvent {
+                    event_id: e.id.0.to_string(),
+                    event_type: e.name,
                     occurred_at: Some(Timestamp::from(SystemTime::now())),
-                    order_id: order_id.0.to_string(),
+                    order_id: e.order_id.0.to_string(),
                 }
                 .encode_to_vec(),
-                OrderEvent::Completed {
-                    id,
-                    name,
-                    order_id,
-                    courier_id,
-                } => OrderCompletedIntegrationEvent {
-                    event_id: id.0.to_string(),
-                    event_type: name,
-                    order_id: order_id.0.to_string(),
-                    courier_id: courier_id.0.to_string(),
+                OrderEvent::Completed { 0: e } => OrderCompletedIntegrationEvent {
+                    event_id: e.id.0.to_string(),
+                    event_type: e.name,
+                    order_id: e.order_id.0.to_string(),
+                    courier_id: e.courier_id.0.to_string(),
                     occurred_at: Some(Timestamp::from(SystemTime::now())),
                 }
                 .encode_to_vec(),
