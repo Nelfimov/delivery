@@ -176,9 +176,9 @@ pub async fn start_crons(
         })
     }) {
         Ok(job) => {
-            // if let Err(error) = scheduler.add(job).await {
-            //     tracing::error!(?error, "failed to register outbox job");
-            // }
+            if let Err(error) = scheduler.add(job).await {
+                tracing::error!(?error, "failed to register outbox job");
+            }
         }
         Err(error) => tracing::error!(?error, "failed to register outbox job"),
     }

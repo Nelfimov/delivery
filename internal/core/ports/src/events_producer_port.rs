@@ -4,6 +4,7 @@ use std::fmt;
 use domain::model::kernel::message::Message;
 use domain::model::order::order_events::OrderEvent;
 
+#[derive(Debug)]
 pub enum Events {
     Order(OrderEvent),
 }

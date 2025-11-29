@@ -2,6 +2,7 @@ use std::time::SystemTime;
 
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct Message {
     pub id: Uuid,
     pub name: String,

@@ -1,7 +1,11 @@
+use std::time::SystemTime;
+
+use domain::model::kernel::message::Message;
 use ports::events_producer_port::Events;
 use ports::events_producer_port::EventsProducerPort;
 use ports::outbox_repository::OutboxRepositoryPort;
 use tracing::debug;
+use tracing::warn;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::JobHandler;
@@ -49,17 +53,16 @@ where
 
         debug!("unprocessed messages: {}", messages.len());
 
-        let events: Vec<Events> = messages
-            .iter()
-            .filter_map(|f| {
-                let event = Events::try_from(f);
-                event.ok()
-            })
-            .collect();
-
-        for event in events {
-            debug!("publishing event: {}", event);
-            self.event_producer.publish(event);
+        for mut message in messages {
+            debug!("publishing message: {:?}", message);
+            let event = Events::try_from(&message).ok();
+            if let Some(e) = event {
+                self.event_producer.publish(e);
+                message.processed_at = Some(SystemTime::now());
+                if let Err(e) = self.outbox_repo.update(&message) {
+                    warn!("error while updating outbox repo: {}", e);
+                }
+            }
         }
 
         Ok(())
