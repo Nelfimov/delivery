@@ -40,10 +40,11 @@ impl OutboxRepositoryPort for RecordingProducer {
         message: &domain::model::kernel::message::Message,
     ) -> Result<(), ports::errors::RepositoryError> {
         let payloads = self.payloads.clone();
+        let message_id = message.id;
 
         tokio::spawn(async move {
             let mut guard = payloads.lock().await;
-            guard.push(EventId(message.id));
+            guard.push(EventId(message_id));
         });
         Ok(())
     }
