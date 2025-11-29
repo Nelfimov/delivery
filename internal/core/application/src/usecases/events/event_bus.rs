@@ -44,13 +44,13 @@ impl EventBus for EventBusImpl {
     async fn commit(&self, event: Events) -> Result<(), CommandError> {
         match event {
             Events::Order(order_event) => match &order_event {
-                OrderEvent::Created { .. } => {
+                OrderEvent::Created(_) => {
                     for subscriber in &self.order_created_subscribers {
                         let mut s = subscriber.lock().await;
                         s.execute(order_event.clone()).await?;
                     }
                 }
-                OrderEvent::Completed { .. } => {
+                OrderEvent::Completed(_) => {
                     for subscriber in &self.order_completed_subscribers {
                         let mut s = subscriber.lock().await;
                         s.execute(order_event.clone()).await?;

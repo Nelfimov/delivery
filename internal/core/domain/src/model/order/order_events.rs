@@ -30,15 +30,15 @@ pub struct OrderCompletedEvent {
 impl DomainEvent for OrderEvent {
     fn id(&self) -> String {
         match self {
-            Self::Created { 0: e, .. } => e.id.0.to_string(),
-            Self::Completed { 0: e, .. } => e.id.0.to_string(),
+            Self::Created(e) => e.id.0.to_string(),
+            Self::Completed(e) => e.id.0.to_string(),
         }
     }
 
     fn name(&self) -> String {
         match self {
-            Self::Created { 0: e, .. } => e.name.clone(),
-            Self::Completed { 0: e, .. } => e.name.clone(),
+            Self::Created(e) => e.name.clone(),
+            Self::Completed(e) => e.name.clone(),
         }
     }
 }

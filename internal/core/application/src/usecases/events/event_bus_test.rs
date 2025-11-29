@@ -26,8 +26,8 @@ impl EventsProducerPort for RecordingProducer {
             let mut guard = payloads.lock().await;
             guard.push(match e {
                 Events::Order(event) => match event {
-                    OrderEvent::Created { 0: e } => e.id,
-                    OrderEvent::Completed { 0: e } => e.id,
+                    OrderEvent::Created(e) => e.id,
+                    OrderEvent::Completed(e) => e.id,
                 },
             });
         });
