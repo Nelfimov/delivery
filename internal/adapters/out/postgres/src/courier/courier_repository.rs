@@ -102,13 +102,30 @@ impl CourierRepositoryPort for CourierRepository {
     }
 
     fn update(&mut self, c: Courier) -> Result<(), RepositoryError> {
-        let dto: CourierDto = c.into();
-        let mut connection = self.connection()?;
+        let courier_dto: CourierDto = c.clone().into();
+        let storage_places_dto: Vec<StoragePlaceDto> = c
+            .storage_places()
+            .to_owned()
+            .into_iter()
+            .map(|f| StoragePlaceDto::from_dto(f, courier_dto.id))
+            .collect();
+        let mut conn = self.pool.get().map_err(PostgresError::from)?;
 
-        update(couriers.find(dto.id))
-            .set(&dto)
-            .execute(connection.as_mut())
-            .map_err(PostgresError::from)?;
+        conn.transaction(|tx| {
+            update(couriers.find(courier_dto.id))
+                .set(&courier_dto)
+                .execute(tx)?;
+
+            if !storage_places_dto.is_empty() {
+                for sp in storage_places_dto {
+                    update(storage_places.find(sp.id)).set(&sp).execute(tx)?;
+                }
+            }
+
+            diesel::result::QueryResult::Ok(())
+        })
+        .map_err(PostgresError::from)?;
+
         Ok(())
     }
 

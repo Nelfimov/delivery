@@ -93,6 +93,7 @@ where
                             order
                                 .complete()
                                 .map_err(|err| RepositoryError::from(err.to_string()))?;
+                            courier.complete_order(order.id());
                         }
 
                         courier_repo.update(courier)?;

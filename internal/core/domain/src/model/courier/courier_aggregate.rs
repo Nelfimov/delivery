@@ -38,7 +38,7 @@ impl Courier {
         speed: CourierSpeed,
         location: Location,
     ) -> Result<Self, DomainModelError> {
-        let detault_volume = Volume::new(10)?;
+        let detault_volume = Volume::new(50)?;
         let default_storage_place = StoragePlace::new("bag".to_string(), detault_volume, None)?;
         let storage_places: Vec<StoragePlace> = vec![default_storage_place];
 
