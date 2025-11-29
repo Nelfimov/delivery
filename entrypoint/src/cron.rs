@@ -1,12 +1,16 @@
 use application::usecases::CommandHandler;
+use application::usecases::JobHandler;
 use application::usecases::commands::assign_order_command::AssignOrderCommand;
 use application::usecases::commands::assign_order_handler::AssignOrderHandler;
 use application::usecases::commands::move_couriers_command::MoveCouriersCommand;
 use application::usecases::commands::move_couriers_handler::MoveCouriersHandler;
 use application::usecases::events::event_bus::EventBus;
+use application::usecases::jobs::outbox_job::OutboxJob;
+use out_kafka::orders_events_producer::OrdersEventsProducer;
 use out_postgres::ConnectionManager;
 use out_postgres::PgConnection;
 use out_postgres::Pool;
+use out_postgres::outbox::outbox_repository::OutboxRepository;
 use out_postgres::unit_of_work::UnitOfWork;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -19,6 +23,8 @@ use tokio_cron_scheduler::JobScheduler;
 pub async fn start_crons(
     pool: Pool<ConnectionManager<PgConnection>>,
     event_bus: impl EventBus + 'static,
+    brokers: &str,
+    group_id: &str,
 ) -> JobScheduler {
     let scheduler = JobScheduler::new()
         .await
@@ -70,7 +76,9 @@ pub async fn start_crons(
         .await
         .expect("failed to register cron job");
 
-    let assign_order_handler = Arc::new(Mutex::new(AssignOrderHandler::new(UnitOfWork::new(pool))));
+    let assign_order_handler = Arc::new(Mutex::new(AssignOrderHandler::new(UnitOfWork::new(
+        pool.clone(),
+    ))));
     let assign_order_handler_job = Arc::clone(&assign_order_handler);
     let assign_job_handle = runtime_handle.clone();
     let assign_orders = Job::new_repeated_async(Duration::from_secs(1), move |_uuid, _l| {
@@ -109,6 +117,46 @@ pub async fn start_crons(
 
     scheduler
         .add(assign_orders)
+        .await
+        .expect("failed to register cron job");
+
+    let outbox_job = Arc::new(Mutex::new(OutboxJob::new(
+        OutboxRepository::new(pool),
+        OrdersEventsProducer::new(brokers, group_id),
+    )));
+    let outbox_handler_job = Arc::clone(&outbox_job);
+    let outbox_job_handle = runtime_handle.clone();
+    let outbox = Job::new_repeated_async(Duration::from_secs(1), move |_uuid, _l| {
+        let handler = Arc::clone(&outbox_handler_job);
+        let handle = outbox_job_handle.clone();
+        Box::pin(async move {
+            let join_result = task::spawn_blocking(move || {
+                let mut handler = match handler.lock() {
+                    Ok(handler) => handler,
+                    Err(err) => {
+                        tracing::error!(
+                            error = %err,
+                            "assign order handler mutex poisoned"
+                        );
+                        return;
+                    }
+                };
+
+                if let Err(err) = handle.block_on(handler.execute()) {
+                    tracing::error!(?err, "assign orders job failed");
+                }
+            })
+            .await;
+
+            if let Err(join_err) = join_result {
+                tracing::error!(?join_err, "assign orders job task panicked");
+            }
+        })
+    })
+    .expect("failed to start assign_order job");
+
+    scheduler
+        .add(outbox)
         .await
         .expect("failed to register cron job");
 

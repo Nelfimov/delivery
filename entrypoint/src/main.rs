@@ -69,7 +69,13 @@ async fn main() {
         event_bus.clone(),
     );
 
-    let mut scheduler = start_crons(pool.clone(), event_bus.clone()).await;
+    let mut scheduler = start_crons(
+        pool.clone(),
+        event_bus.clone(),
+        &config.kafka_host,
+        &config.kafka_consumer_group,
+    )
+    .await;
 
     let consumer_order_repo = Shared::new(OrderRepository::new(pool.clone()));
     let consumer = BasketEventsConsumer::new(

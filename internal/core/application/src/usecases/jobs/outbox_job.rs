@@ -14,6 +14,19 @@ where
     event_producer: EP,
 }
 
+impl<OR, EP> OutboxJob<OR, EP>
+where
+    OR: OutboxRepositoryPort + Send + Sync,
+    EP: EventsProducerPort + Send + Sync,
+{
+    pub fn new(outbox_repo: OR, event_producer: EP) -> Self {
+        Self {
+            outbox_repo,
+            event_producer,
+        }
+    }
+}
+
 #[async_trait::async_trait]
 impl<OR, EP> JobHandler for OutboxJob<OR, EP>
 where
