@@ -56,7 +56,7 @@ pub async fn start_crons(
                 match MoveCouriersCommand::new() {
                     Ok(command) => {
                         if let Err(err) = handle.block_on(handler.execute(command)) {
-                            tracing::error!(?err, "move couriers job failed");
+                            tracing::warn!(?err, "move couriers job failed");
                         }
                     }
                     Err(err) => tracing::error!(?err, "failed to create move couriers command"),
@@ -100,7 +100,7 @@ pub async fn start_crons(
                 match AssignOrderCommand::new() {
                     Ok(command) => {
                         if let Err(err) = handle.block_on(handler.execute(command)) {
-                            tracing::error!(?err, "assign orders job failed");
+                            tracing::warn!(?err, "assign orders job failed");
                         }
                     }
                     Err(err) => tracing::error!(?err, "failed to create assign order command"),
@@ -143,7 +143,7 @@ pub async fn start_crons(
                 };
 
                 if let Err(err) = handle.block_on(handler.execute()) {
-                    tracing::error!(?err, "assign orders job failed");
+                    tracing::warn!(?err, "assign orders job failed");
                 }
             })
             .await;
