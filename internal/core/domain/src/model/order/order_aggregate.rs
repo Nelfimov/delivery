@@ -56,7 +56,7 @@ impl OrderId {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Order {
     id: OrderId,
     courier_id: Option<CourierId>,
@@ -65,6 +65,16 @@ pub struct Order {
     status: OrderStatus,
 
     domain_events: Vec<OrderEvent>,
+}
+
+impl Display for Order {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{:?}, courier: {:?}, x: {:?}",
+            self.id, self.courier_id, self.location
+        )
+    }
 }
 
 impl PartialEq for Order {

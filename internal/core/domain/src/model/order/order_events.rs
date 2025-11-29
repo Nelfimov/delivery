@@ -6,20 +6,20 @@ use crate::model::kernel::event::DomainEvent;
 use crate::model::kernel::event::EventId;
 use crate::model::order::order_aggregate::OrderId;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum OrderEvent {
     Created(OrderCreatedEvent),
     Completed(OrderCompletedEvent),
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct OrderCreatedEvent {
     pub id: EventId,
     pub name: String,
     pub order_id: OrderId,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct OrderCompletedEvent {
     pub id: EventId,
     pub name: String,
