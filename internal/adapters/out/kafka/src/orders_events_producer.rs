@@ -22,10 +22,7 @@ impl OrdersEventsProducer {
         let mut config = ClientConfig::new();
 
         let producer: FutureProducer = config
-            .set("group.id", group_id)
             .set("bootstrap.servers", brokers)
-            .set("enable.partition.eof", "false")
-            .set("session.timeout.ms", "6000")
             .create()
             .expect("could not create consumer");
 
