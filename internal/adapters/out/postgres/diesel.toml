@@ -17,5 +17,9 @@ with_docs = true
 file = "src/storage_place/storage_place_schema.rs"
 with_docs = true
 
+[print_schema.outbox]
+file = "src/outbox/outbox_schema.rs"
+with_docs = true
+
 [migrations_directory]
 dir = "migrations"

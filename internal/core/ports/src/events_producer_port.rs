@@ -8,6 +8,13 @@ pub enum Events {
     Order(OrderEvent),
 }
 
+impl std::fmt::Display for Events {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let str = &self::Events::to_string(self);
+        write!(f, "{}", str)
+    }
+}
+
 impl From<OrderEvent> for Events {
     fn from(v: OrderEvent) -> Self {
         Events::Order(v)

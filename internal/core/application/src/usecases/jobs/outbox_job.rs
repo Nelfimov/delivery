@@ -1,6 +1,7 @@
 use ports::events_producer_port::Events;
 use ports::events_producer_port::EventsProducerPort;
 use ports::outbox_repository::OutboxRepositoryPort;
+use tracing::debug;
 
 use crate::errors::command_errors::CommandError;
 use crate::usecases::JobHandler;
@@ -34,10 +35,19 @@ where
     EP: EventsProducerPort + Send + Sync,
 {
     async fn execute(&mut self) -> Result<(), CommandError> {
+        debug!("looking for unprocessed events");
+
         let messages = self
             .outbox_repo
             .get_not_published_messages()
             .map_err(CommandError::from)?;
+
+        if messages.is_empty() {
+            debug!("no unprocessed messages");
+            return Ok(());
+        }
+
+        debug!("unprocessed messages: {}", messages.len());
 
         let events: Vec<Events> = messages
             .iter()
@@ -48,6 +58,7 @@ where
             .collect();
 
         for event in events {
+            debug!("publishing event: {}", event);
             self.event_producer.publish(event);
         }
 

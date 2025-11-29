@@ -126,7 +126,7 @@ pub async fn start_crons(
     )));
     let outbox_handler_job = Arc::clone(&outbox_job);
     let outbox_job_handle = runtime_handle.clone();
-    let outbox = Job::new_repeated_async(Duration::from_secs(1), move |_uuid, _l| {
+    let outbox = Job::new_repeated_async(Duration::from_secs(10), move |_uuid, _l| {
         let handler = Arc::clone(&outbox_handler_job);
         let handle = outbox_job_handle.clone();
         Box::pin(async move {
