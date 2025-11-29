@@ -27,7 +27,7 @@ tokio = { version = "1.41", features = [
 ] }
 axum = { version = "0.8", features = ["multipart"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tower-http = { version = "0.6", features = ["trace"] }
+tower-http = { version = "0.6", features = ["trace", "cors"] }
 tracing = { version = "0.1", features = ["attributes"] }
 async-trait = { version = "0.1" }
 axum-extra = { version = "0.12", features = ["cookie", "query"] }
