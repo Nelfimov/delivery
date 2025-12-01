@@ -33,7 +33,7 @@ impl OrderDispatcher for OrderDispatcherService {
             .filter(|(_, c)| c.can_take_order(&order_volume).is_some())
             .min_by_key(|(_, c)| c.get_traverse_length(order.location()))
             .ok_or(DomainModelError::UnmetRequirement(
-                "no courier found".into(),
+                "no available courier found".into(),
             ))?;
 
         let courier = &mut couriers[idx];

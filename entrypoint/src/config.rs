@@ -7,7 +7,7 @@ fn default_server_address() -> String {
 }
 
 fn default_server_port() -> String {
-    String::from("3000")
+    String::from("8082")
 }
 
 fn default_geo_address() -> String {

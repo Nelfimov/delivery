@@ -5,6 +5,7 @@ use crate::errors::command_errors::CommandError;
 
 pub mod commands;
 pub mod events;
+pub mod jobs;
 pub mod queries;
 
 #[trait_variant::make(HttpService: Send)]
@@ -16,5 +17,10 @@ pub trait CommandHandler<C, R> {
 
 #[async_trait]
 pub trait Handler: Send + Sync {
-    async fn execute(&self, event: OrderEvent) -> Result<(), CommandError>;
+    async fn execute(&mut self, event: OrderEvent) -> Result<(), CommandError>;
+}
+
+#[async_trait]
+pub trait JobHandler: Send + Sync {
+    async fn execute(&mut self) -> Result<(), CommandError>;
 }

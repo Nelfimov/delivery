@@ -7,3 +7,5 @@ edition = "2024"
 async-trait = { workspace = true }
 domain = { path = "../domain/" }
 trait-variant = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

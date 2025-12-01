@@ -94,16 +94,33 @@ where
         let repo = self.state().courier_repo();
         let mut handler = CreateCourierHandler::new(repo);
 
-        let command =
-            match CreateCourierCommand::new(CourierName("Bob".to_string()), CourierSpeed(5)) {
-                Ok(cmd) => cmd,
-                Err(err) => {
-                    return Ok(CreateCourierResponse::Status400(models::Error {
-                        message: err.to_string(),
-                        code: 400,
-                    }));
+        let command = match body {
+            Some(b) => {
+                match CreateCourierCommand::new(
+                    CourierName(b.name.to_owned()),
+                    CourierSpeed(b.speed as u8),
+                ) {
+                    Ok(cmd) => cmd,
+                    Err(err) => {
+                        return Ok(CreateCourierResponse::Status400(models::Error {
+                            message: err.to_string(),
+                            code: 400,
+                        }));
+                    }
                 }
-            };
+            }
+            None => {
+                match CreateCourierCommand::new(CourierName("Bob".to_string()), CourierSpeed(5)) {
+                    Ok(cmd) => cmd,
+                    Err(err) => {
+                        return Ok(CreateCourierResponse::Status400(models::Error {
+                            message: err.to_string(),
+                            code: 400,
+                        }));
+                    }
+                }
+            }
+        };
 
         match handler.execute(command).await {
             Ok(_) => Ok(CreateCourierResponse::Status201),

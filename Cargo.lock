@@ -46,6 +46,8 @@ dependencies = [
  "async-trait",
  "domain",
  "ports",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -594,6 +596,8 @@ name = "domain"
 version = "0.1.0"
 dependencies = [
  "rand 0.9.2",
+ "serde",
+ "serde_json",
  "uuid",
 ]
 
@@ -1776,6 +1780,7 @@ dependencies = [
  "testcontainers",
  "testcontainers-modules",
  "tokio",
+ "tracing",
  "uuid",
 ]
 
@@ -1963,6 +1968,8 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "domain",
+ "serde",
+ "serde_json",
  "trait-variant",
 ]
 

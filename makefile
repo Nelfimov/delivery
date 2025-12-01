@@ -9,11 +9,15 @@ prepare:
 	@echo "✅ Git hooks подключены (core.hooksPath = $(HOOKS_DIR))"
 
 build: test ## Build application
-	mkdir -p build
-	go build -o build/${APP_NAME} cmd/app/main.go
+	cargo build
 
 test: ## Run tests
-	go test ./...
+	cargo test
+
+create-courier:
+	@curl localhost:8082/api/v1/couriers --json '{ "name": "John", "speed": 1 }' -H 'content-type: application/json'
+	@curl localhost:8082/api/v1/couriers --json '{ "name": "Albert", "speed": 2 }' -H 'content-type: application/json'
+	@curl localhost:8082/api/v1/couriers --json '{ "name": "Edik", "speed": 3 }' -H 'content-type: application/json'
 
 generate-server:
 	@openapi-generator-cli generate -g rust-axum -i https://gitlab.com/microarch-ru/ddd-in-practice/system-design/-/raw/main/services/delivery/contracts/openapi.yml -c configs/server.cfg.yaml -o internal/generated/servers

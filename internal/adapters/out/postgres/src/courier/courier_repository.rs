@@ -77,26 +77,55 @@ impl CourierRepository {
 
 impl CourierRepositoryPort for CourierRepository {
     fn add(&mut self, c: Courier) -> Result<(), RepositoryError> {
-        let dto: CourierDto = c.into();
-        let mut connection = self.connection()?;
+        let courier_dto: CourierDto = c.clone().into();
+        let storage_places_dto: Vec<StoragePlaceDto> = c
+            .storage_places()
+            .to_owned()
+            .into_iter()
+            .map(|f| StoragePlaceDto::from_dto(f, courier_dto.id))
+            .collect();
 
-        insert_into(couriers)
-            .values(&dto)
-            .execute(connection.as_mut())
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+        let mut conn = self.pool.get().map_err(PostgresError::from)?;
+
+        conn.transaction(|tx| {
+            insert_into(couriers).values(&courier_dto).execute(tx)?;
+
+            insert_into(storage_places)
+                .values(storage_places_dto)
+                .execute(tx)?;
+
+            diesel::result::QueryResult::Ok(())
+        })
+        .map_err(PostgresError::from)?;
+
         Ok(())
     }
 
     fn update(&mut self, c: Courier) -> Result<(), RepositoryError> {
-        let dto: CourierDto = c.into();
-        let mut connection = self.connection()?;
+        let courier_dto: CourierDto = c.clone().into();
+        let storage_places_dto: Vec<StoragePlaceDto> = c
+            .storage_places()
+            .to_owned()
+            .into_iter()
+            .map(|f| StoragePlaceDto::from_dto(f, courier_dto.id))
+            .collect();
+        let mut conn = self.pool.get().map_err(PostgresError::from)?;
 
-        update(couriers.find(dto.id))
-            .set(&dto)
-            .execute(connection.as_mut())
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+        conn.transaction(|tx| {
+            update(couriers.find(courier_dto.id))
+                .set(&courier_dto)
+                .execute(tx)?;
+
+            if !storage_places_dto.is_empty() {
+                for sp in storage_places_dto {
+                    update(storage_places.find(sp.id)).set(&sp).execute(tx)?;
+                }
+            }
+
+            diesel::result::QueryResult::Ok(())
+        })
+        .map_err(PostgresError::from)?;
+
         Ok(())
     }
 
@@ -107,8 +136,7 @@ impl CourierRepositoryPort for CourierRepository {
             .inner_join(storage_places)
             .filter(id.eq(c_id.0))
             .load(connection.as_mut())
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+            .map_err(PostgresError::from)?;
 
         let (courier_dto, storage_dtos): (CourierDto, Vec<StoragePlaceDto>) = {
             let mut iter = results.into_iter();
@@ -136,8 +164,7 @@ impl CourierRepositoryPort for CourierRepository {
             .inner_join(storage_places)
             .filter(order_id.is_null())
             .load(connection.as_mut())
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+            .map_err(PostgresError::from)?;
 
         let mut grouped: HashMap<Uuid, (CourierDto, Vec<StoragePlaceDto>)> = HashMap::new();
 
@@ -165,8 +192,7 @@ impl CourierRepositoryPort for CourierRepository {
         let rows = table
             .select((id, name, location_x, location_y))
             .load::<(Uuid, String, i16, i16)>(connection.as_mut())
-            .map_err(PostgresError::from)
-            .map_err(RepositoryError::from)?;
+            .map_err(PostgresError::from)?;
 
         let result: Vec<GetAllCouriersResponse> = rows
             .iter()

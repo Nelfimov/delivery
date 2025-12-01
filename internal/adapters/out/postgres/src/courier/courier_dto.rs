@@ -14,3 +14,9 @@ pub struct CourierDto {
     pub location_x: i16,
     pub location_y: i16,
 }
+
+impl std::fmt::Display for CourierDto {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "id: {}, name: {}", self.id, self.name)
+    }
+}

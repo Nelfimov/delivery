@@ -1,3 +1,5 @@
+use serde::Deserialize;
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::errors::domain_model_errors::DomainModelError;
@@ -6,7 +8,7 @@ use crate::model::kernel::location::Location;
 use crate::model::kernel::volume::Volume;
 use crate::model::order::order_aggregate::OrderId;
 
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct CourierId(pub Uuid);
 
 #[derive(Clone, Debug)]
@@ -36,7 +38,7 @@ impl Courier {
         speed: CourierSpeed,
         location: Location,
     ) -> Result<Self, DomainModelError> {
-        let detault_volume = Volume::new(10)?;
+        let detault_volume = Volume::new(50)?;
         let default_storage_place = StoragePlace::new("bag".to_string(), detault_volume, None)?;
         let storage_places: Vec<StoragePlace> = vec![default_storage_place];
 
@@ -151,7 +153,7 @@ impl Courier {
                 self.location = Location::new(x, self.location.y())?
             }
             if self.location.x() > location.x() {
-                let preliminary_action = self.location.x() - speed;
+                let preliminary_action = self.location.x().saturating_sub(speed);
                 let x = if preliminary_action < location.x() {
                     location.x()
                 } else {
@@ -170,7 +172,7 @@ impl Courier {
                 self.location = Location::new(self.location.x(), y)?
             }
             if self.location.y() > location.y() {
-                let preliminary_action = self.location.y() - speed;
+                let preliminary_action = self.location.y().saturating_sub(speed);
                 let y = if preliminary_action < location.y() {
                     location.y()
                 } else {
