@@ -2,6 +2,7 @@ FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
   protobuf-compiler \
+  libprotobuf-dev \
   && \
   rm -rf /var/lib/apt/lists/*
 
