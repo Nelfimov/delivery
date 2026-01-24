@@ -17,4 +17,4 @@ jobs:
       contents: read
       id-token: write
     with:
-      packageName: microarch-delivery
+      imageName: microarch-delivery
