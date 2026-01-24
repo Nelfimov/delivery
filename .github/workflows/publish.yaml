@@ -16,6 +16,6 @@ jobs:
     permissions:
       packages: write
       contents: read
-      id-token: read
+      id-token: write
     with:
       packageName: microarch-delivery
