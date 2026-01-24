@@ -3,7 +3,6 @@ name: Deploy trigger
 on:
   push:
     branches:
-      - master
       - main
     paths-ignore:
       - .github/**
