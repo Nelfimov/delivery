@@ -1,0 +1,21 @@
+name: Deploy trigger
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - .github/**
+  workflow_dispatch:
+
+jobs:
+  publish:
+    needs: predeploy-check
+    name: Build Docker image and push
+    uses: nelfimov/workflows/.github/workflows/publish-image.yaml@master
+    permissions:
+      packages: write
+      contents: read
+      id-token: read
+    with:
+      packageName: microarch-delivery
