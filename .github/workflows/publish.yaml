@@ -10,7 +10,6 @@ on:
 
 jobs:
   publish:
-    needs: predeploy-check
     name: Build Docker image and push
     uses: nelfimov/workflows/.github/workflows/publish-image.yaml@master
     permissions:
