@@ -1,4 +1,4 @@
-name: Deploy trigger
+name: Publish image
 
 on:
   push:
