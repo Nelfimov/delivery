@@ -1,29 +1,22 @@
-# syntax=docker/dockerfile:1
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+WORKDIR /app
 
-# Build the application from source
-FROM golang:1.23.7 AS build-stage
-
-WORKDIR /build
-
-COPY go.mod go.sum ./
-RUN go mod download
-
+FROM chef AS planner
 COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app ./cmd/app/main.go
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+COPY . .
+RUN cargo build --release -p entrypoint
 
-# Run the tests in the container
-FROM build-stage AS run-test-stage
-RUN go test -v ./...
+FROM debian:trixie-slim AS runtime
+WORKDIR /app
+COPY --from=builder /app/target/release/entrypoint /usr/local/bin
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  curl \
+  && \
+  rm -rf /var/lib/apt/lists/*
 
-# Deploy the application binary into a lean image
-FROM gcr.io/distroless/base-debian11 AS build-release-stage
-
-WORKDIR /
-COPY --from=build-stage /app /app
-
-EXPOSE 8082
-
-USER nonroot:nonroot
-
-ENTRYPOINT ["/app"]
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
