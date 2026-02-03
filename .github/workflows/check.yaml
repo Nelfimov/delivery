@@ -12,7 +12,6 @@ jobs:
   check:
     name: Check Rust
     runs-on: ubuntu-latest
-    permissions: read-all
 
     steps:
       - uses: actions/checkout@v5
